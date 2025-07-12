@@ -1,9 +1,12 @@
 package edu.uab.fiji;
 
-import lombok.Data;
+public record Threshold(long min, long max) {
 
-@Data
-public class Threshold {
-    private final long min;
-    private final long max;
+    @Override
+    public String toString() {
+        return "Threshold{" +
+                "min=" + min +
+                ", max=" + max +
+                '}';
+    }
 }

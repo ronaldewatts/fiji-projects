@@ -4,29 +4,15 @@ import edu.uab.fiji.service.ResultsTableService;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.measure.ResultsTable;
-import lombok.Data;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 
-@Data
-public class ImageChannel {
-    private final String name;
-    private final ImagePlus imagePlus;
-    private final ChannelType channelType;
-    private final Threshold positiveThreshold;
-    private final BigDecimal negativeMean;
-
-    public ImageChannel(String name, ImagePlus imagePlus, ChannelType channelType, Threshold positiveThreshold, BigDecimal negativeMean) {
-        this.name = name;
-        this.imagePlus = imagePlus;
-        this.channelType = channelType;
-        this.positiveThreshold = positiveThreshold;
-        this.negativeMean = negativeMean;
-    }
+public record ImageChannel(String name, ImagePlus imagePlus, ChannelType channelType, Threshold positiveThreshold,
+                           BigDecimal negativeMean) {
 
     public Measurement measure() {
-        IJ.setRawThreshold(imagePlus, positiveThreshold.getMin(), positiveThreshold.getMax());
+        IJ.setRawThreshold(imagePlus, positiveThreshold.min(), positiveThreshold.max());
         IJ.run(imagePlus, "Subtract...", "value=" + negativeMean);
         ResultsTable resultsTable = ResultsTableService.INSTANCE.measure(imagePlus);
 
@@ -39,4 +25,6 @@ public class ImageChannel {
 
         return new Measurement(this, area, mean, min, max, integratedDensity);
     }
+
+
 }

@@ -6,7 +6,6 @@ import ij.ImagePlus;
 import ij.ImageStack;
 import ij.plugin.ChannelSplitter;
 import ij.process.ImageProcessor;
-import lombok.Data;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -14,7 +13,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-@Data
 public class Image {
     private final String name;
     private final List<ImageChannel> imageChannels = new ArrayList<>();
@@ -46,8 +44,8 @@ public class Image {
     }
 
     public Map<ChannelType, Threshold> getThresholds() {
-        return imageChannels.stream().collect(Collectors.toMap(ImageChannel::getChannelType, imageChannel -> {
-            ImagePlus imagePlus = imageChannel.getImagePlus();
+        return imageChannels.stream().collect(Collectors.toMap(ImageChannel::channelType, imageChannel -> {
+            ImagePlus imagePlus = imageChannel.imagePlus();
             imagePlus.setAutoThreshold("Default dark");
             ImageProcessor imgProc = imagePlus.getProcessor();
             return new Threshold((long) imgProc.getMinThreshold(), (long) imgProc.getMaxThreshold());
@@ -55,8 +53,8 @@ public class Image {
     }
 
     public Map<ChannelType, BigDecimal> getMeans() {
-        return imageChannels.stream().collect(Collectors.toMap(ImageChannel::getChannelType, imageChannel -> {
-            ImagePlus imagePlus = imageChannel.getImagePlus();
+        return imageChannels.stream().collect(Collectors.toMap(ImageChannel::channelType, imageChannel -> {
+            ImagePlus imagePlus = imageChannel.imagePlus();
             return ResultsTableService.INSTANCE.getMean(imagePlus);
         }));
     }
@@ -69,5 +67,21 @@ public class Image {
             }
         }
         return measurements;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public List<ImageChannel> getImageChannels() {
+        return imageChannels;
+    }
+
+    @Override
+    public String toString() {
+        return "Image{" +
+                "name='" + name + '\'' +
+                ", imageChannels=" + imageChannels +
+                '}';
     }
 }

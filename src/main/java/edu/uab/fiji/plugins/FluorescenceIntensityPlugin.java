@@ -30,7 +30,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Stream;
 
-@Plugin(name = "FluorescenceIntensity", type = Command.class, headless = true, menuPath = "UAB Tools > Fluorescence Intensity")
+@Plugin(name = "Fluorescence Intensity", type = Command.class, headless = true, menuPath = "UAB>Fluorescence Intensity")
 public class FluorescenceIntensityPlugin implements Command {
 
     @Override
@@ -48,6 +48,9 @@ public class FluorescenceIntensityPlugin implements Command {
         ThresholdAdjuster.setMode("B&W");
 
         DirectoryChooser od = new DirectoryChooser("Choose a directory to process...");
+        if (od.getDirectory() == null) {
+            System.exit(0);
+        }
         String rootDirectory = od.getDirectory().substring(0, od.getDirectory().length() - 1); // Remove trailing /
         IJ.log("Running analysis of " + rootDirectory);
 

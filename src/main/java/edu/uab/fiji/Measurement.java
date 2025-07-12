@@ -7,17 +7,17 @@ public record Measurement(ImageChannel imageChannel, long area, BigDecimal mean,
                           long integratedDensity) {
 
     public String toCsvEntry() {
-        return imageChannel.getName() + "," +
-                imageChannel.getChannelType() + "," +
+        return imageChannel.name() + "," +
+                imageChannel.channelType() + "," +
                 area + "," +
                 mean + "," +
                 min + "," +
                 max + "," +
                 integratedDensity + "," +
                 new BigDecimal(integratedDensity).divide(new BigDecimal(area), 6, RoundingMode.HALF_UP) + "," +
-                imageChannel.getPositiveThreshold().getMin() + "," +
-                imageChannel.getPositiveThreshold().getMax() + "," +
-                imageChannel.getNegativeMean() +
+                imageChannel.positiveThreshold().min() + "," +
+                imageChannel.positiveThreshold().max() + "," +
+                imageChannel.negativeMean() +
                 System.lineSeparator();
     }
 
