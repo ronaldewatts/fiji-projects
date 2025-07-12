@@ -1,9 +1,9 @@
 package edu.uab.fiji.plugins;
 
-import edu.uab.fiji.ChannelType;
-import edu.uab.fiji.Image;
-import edu.uab.fiji.Measurement;
-import edu.uab.fiji.Threshold;
+import edu.uab.fiji.domain.ChannelType;
+import edu.uab.fiji.domain.Image;
+import edu.uab.fiji.domain.Measurement;
+import edu.uab.fiji.domain.Threshold;
 import edu.uab.fiji.service.ResultsTableService;
 import ij.IJ;
 import ij.WindowManager;

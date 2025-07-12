@@ -1,4 +1,4 @@
-package edu.uab.fiji;
+package edu.uab.fiji.domain;
 
 public enum ChannelType {
     CY5,

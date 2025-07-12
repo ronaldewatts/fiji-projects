@@ -1,4 +1,4 @@
-package edu.uab.fiji;
+package edu.uab.fiji.domain;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;

@@ -1,4 +1,4 @@
-package edu.uab.fiji;
+package edu.uab.fiji.domain;
 
 import edu.uab.fiji.service.ResultsTableService;
 import ij.IJ;
