@@ -5,8 +5,8 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>fiji.plugins</groupId>
-    <artifactId>fiji-plugins</artifactId>
-    <version>1.0.1</version>
+    <artifactId>uab-fiji-plugins</artifactId>
+    <version>1.0.0</version>
 
     <properties>
         <maven.compiler.source>21</maven.compiler.source>
