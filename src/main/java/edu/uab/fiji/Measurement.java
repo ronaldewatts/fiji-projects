@@ -1,4 +1,4 @@
-package fiji.plugins.imageanalyzer.domain;
+package edu.uab.fiji;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;

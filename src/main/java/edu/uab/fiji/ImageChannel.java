@@ -1,6 +1,6 @@
-package fiji.plugins.imageanalyzer.domain;
+package edu.uab.fiji;
 
-import fiji.plugins.imageanalyzer.service.ResultsTableService;
+import edu.uab.fiji.service.ResultsTableService;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.measure.ResultsTable;

@@ -1,6 +1,6 @@
-package fiji.plugins.imageanalyzer;
+package edu.uab.fiji;
 
-import fiji.plugins.imageanalyzer.plugins.FluorescenceIntensityPlugin;
+import edu.uab.fiji.plugins.FluorescenceIntensityPlugin;
 
 public class MainRunner {
     public static void main(String[] args) {

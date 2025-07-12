@@ -1,4 +1,4 @@
-package fiji.plugins.imageanalyzer.domain;
+package edu.uab.fiji;
 
 import lombok.Data;
 

@@ -1,10 +1,10 @@
-package fiji.plugins.imageanalyzer.plugins;
+package edu.uab.fiji.plugins;
 
-import fiji.plugins.imageanalyzer.domain.ChannelType;
-import fiji.plugins.imageanalyzer.domain.Image;
-import fiji.plugins.imageanalyzer.domain.Measurement;
-import fiji.plugins.imageanalyzer.domain.Threshold;
-import fiji.plugins.imageanalyzer.service.ResultsTableService;
+import edu.uab.fiji.ChannelType;
+import edu.uab.fiji.Image;
+import edu.uab.fiji.Measurement;
+import edu.uab.fiji.Threshold;
+import edu.uab.fiji.service.ResultsTableService;
 import ij.IJ;
 import ij.WindowManager;
 import ij.io.DirectoryChooser;
@@ -30,7 +30,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Stream;
 
-@Plugin(name = "FluorescenceIntensity", type = Command.class, headless = true, menuPath = "UAB>Fluorescence Intensity")
+@Plugin(name = "FluorescenceIntensity", type = Command.class, headless = true, menuPath = "UAB Tools > Fluorescence Intensity")
 public class FluorescenceIntensityPlugin implements Command {
 
     @Override

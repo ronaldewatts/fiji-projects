@@ -1,4 +1,4 @@
-package fiji.plugins.imageanalyzer.service;
+package edu.uab.fiji.service;
 
 import ij.IJ;
 import ij.ImagePlus;
