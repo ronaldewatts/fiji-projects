@@ -17,8 +17,7 @@ public record ImageChannel(String name, ImagePlus imagePlus, ChannelType channel
         ResultsTable resultsTable = ResultsTableService.INSTANCE.measure(imagePlus);
 
         long area = (long) resultsTable.getValue("Area", 0);
-        BigDecimal mean = new BigDecimal(Double.toString(resultsTable.getValue("Mean", 0)))
-                .setScale(3, RoundingMode.HALF_UP);
+        BigDecimal mean = BigDecimal.valueOf(resultsTable.getValue("Mean", 0)).setScale(3, RoundingMode.HALF_UP);
         long min = (long) resultsTable.getValue("Min", 0);
         long max = (long) resultsTable.getValue("Max", 0);
         long integratedDensity = (long) resultsTable.getValue("IntDen", 0);

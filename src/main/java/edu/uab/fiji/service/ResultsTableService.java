@@ -28,8 +28,7 @@ public class ResultsTableService {
         IJ.run("Set Measurements...", "mean redirect=None decimal=3");
         IJ.run(imagePlus, "Measure", "");
 
-        BigDecimal mean = new BigDecimal(Double.toString(resultsTable.getValue("Mean", 0)))
-                .setScale(3, RoundingMode.HALF_UP);
+        BigDecimal mean = BigDecimal.valueOf(resultsTable.getValue("Mean", 0)).setScale(3, RoundingMode.HALF_UP);
 
         reset();
 
