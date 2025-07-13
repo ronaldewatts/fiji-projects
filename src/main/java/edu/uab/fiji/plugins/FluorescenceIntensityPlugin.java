@@ -54,19 +54,25 @@ public class FluorescenceIntensityPlugin implements Command {
         String rootDirectory = od.getDirectory().substring(0, od.getDirectory().length() - 1); // Remove trailing /
         IJ.log("Running analysis of " + rootDirectory);
 
-        System.out.println("=============Positive Control=================");
+        IJ.log("=============Positive Control=================");
         Image positiveImage = new Image(rootDirectory + "/Positive Control.tif");
         Map<ChannelType, Threshold> positiveThresholdMap = positiveImage.getThresholds();
-        System.out.println(positiveImage);
-        System.out.println(positiveThresholdMap);
-        System.out.println("==============================================");
+        IJ.log(positiveImage.toString());
+        IJ.log(positiveThresholdMap.toString());
+        if (positiveThresholdMap.isEmpty()) {
+            IJ.log("No positive thresholds found. Exiting.");
+        }
+        IJ.log("==============================================");
 
-        System.out.println("=============Negative Control=================");
+        IJ.log("=============Negative Control=================");
         Image negativeImage = new Image(rootDirectory + "/Negative Control.tif");
         Map<ChannelType, BigDecimal> negativeMeansMap = negativeImage.getMeans();
-        System.out.println(negativeImage);
-        System.out.println(negativeMeansMap);
-        System.out.println("==============================================");
+        IJ.log(negativeImage.toString());
+        IJ.log(negativeMeansMap.toString());
+        if (negativeMeansMap.isEmpty()) {
+            IJ.log("No negative means found. Exiting.");
+        }
+        IJ.log("==============================================");
 
         List<String> imageDirectories = getImageDirectories(rootDirectory);
 

@@ -10,9 +10,8 @@ import java.math.RoundingMode;
 
 public class ResultsTableService {
 
-    private final ResultsTable resultsTable;
-
     public static final ResultsTableService INSTANCE = new ResultsTableService();
+    private final ResultsTable resultsTable;
 
     private ResultsTableService() {
         resultsTable = Analyzer.getResultsTable();

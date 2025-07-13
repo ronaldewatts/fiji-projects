@@ -34,13 +34,24 @@ public class Image {
             if (channelType == ChannelType.DISCARD) {
                 IJ.log("Unknown channel type " + shortLabel + " for " + name);
             } else {
-                this.imageChannels.add(new ImageChannel(
-                        this.name,
-                        imageChannel,
-                        channelType,
-                        posThresholds.get(channelType),
-                        negMeans.get(channelType))
-                );
+                Threshold positiveThreshold = posThresholds.get(channelType);
+                BigDecimal negativeMean = negMeans.get(channelType);
+                if (positiveThreshold == null || negativeMean == null) {
+                    if (positiveThreshold == null) {
+                        IJ.log("No positive threshold found for" + channelType + " for " + name);
+                    }
+                    if (negativeMean == null) {
+                        IJ.log("No negative mean found for" + channelType + " for " + name);
+                    }
+                } else {
+                    this.imageChannels.add(new ImageChannel(
+                            this.name,
+                            imageChannel,
+                            channelType,
+                            positiveThreshold,
+                            negativeMean)
+                    );
+                }
             }
         }
     }
