@@ -31,7 +31,9 @@ public class Image {
             ImagePlus imageChannel = splitImages[i];
             String shortLabel = stack.getShortSliceLabel(i + 1);
             ChannelType channelType = ChannelType.fromString(shortLabel);
-            if (channelType != ChannelType.DISCARD) {
+            if (channelType == ChannelType.DISCARD) {
+                IJ.log("Unknown channel type " + shortLabel + " for " + name);
+            } else {
                 this.imageChannels.add(new ImageChannel(
                         this.name,
                         imageChannel,
