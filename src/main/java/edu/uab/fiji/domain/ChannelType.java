@@ -7,10 +7,12 @@ public enum ChannelType {
     RFP,
     DISCARD;
 
-    public static ChannelType fromString(String string) {
-        for (ChannelType value : values()) {
-            if (string.contains(value.toString())) {
-                return value;
+    public static ChannelType fromString(String sliceLabel) {
+        if (sliceLabel != null) {
+            for (ChannelType value : values()) {
+                if (sliceLabel.contains(value.toString())) {
+                    return value;
+                }
             }
         }
         return DISCARD;
