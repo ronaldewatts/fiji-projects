@@ -2,14 +2,9 @@
 
 These plugins are designed to simplify tasks traditionally done manually within
 the [Fiji](https://imagej.net/software/fiji/)
-system. The plugin JAR can be built with the following command:
-
-```shell
-mvn clean compile install
-```
-
-**The maven command ran from the command line does not generate the META-INF/json/org.scijava.plugin.Plugin file right
-for some reason. Must run from IntelliJ for now.**
+system. The maven command ran from the command line does not generate the `META-INF/json/org.scijava.plugin.Plugin`
+file so `clean` and `install` must be ran from IntelliJ. I believe this has to do with the fact that this project
+uses the Java version found in the Fiji installation.
 
 The resulting JAR file will be the `{project_root}/target` directory named `fiji-plugins-{version}.jar`.
 The plugin can then be installed Fiji via `Plugins > Install...` and restarting. The Plugins will be under the `UAB`

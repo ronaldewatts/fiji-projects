@@ -8,7 +8,8 @@ import ij.measure.ResultsTable;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 
-public record ImageChannel(String name, ImagePlus imagePlus, ChannelType channelType, Threshold positiveThreshold,
+public record ImageChannel(String folder, String name, ImagePlus imagePlus, ChannelType channelType,
+                           Threshold positiveThreshold,
                            BigDecimal negativeMean) {
 
     public Measurement measure() {

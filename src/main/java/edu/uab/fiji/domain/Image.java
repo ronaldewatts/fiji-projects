@@ -7,6 +7,7 @@ import ij.ImageStack;
 import ij.plugin.ChannelSplitter;
 import ij.process.ImageProcessor;
 
+import java.io.File;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
@@ -21,9 +22,11 @@ public class Image {
         this(location, Map.of(), Map.of());
     }
 
-    public Image(String location, Map<ChannelType, Threshold> posThresholds, Map<ChannelType, BigDecimal> negMeans) {
+    public Image(String location, Map<ChannelType, Threshold> positiveThresholdsMap, Map<ChannelType, BigDecimal> negativeMeansMap) {
         ImagePlus image = IJ.openImage(location);
+        File imageFile = new File(location);
         this.name = image.getTitle().replace(".tif", "");
+        String folder = imageFile.getParent();
 
         ImagePlus[] splitImages = ChannelSplitter.split(image);
         ImageStack stack = image.getStack();
@@ -34,17 +37,18 @@ public class Image {
             if (channelType == ChannelType.DISCARD) {
                 IJ.log("Unknown channel type " + shortLabel + " for " + name);
             } else {
-                Threshold positiveThreshold = posThresholds.get(channelType);
-                BigDecimal negativeMean = negMeans.get(channelType);
-                if (positiveThreshold == null || negativeMean == null) {
+                Threshold positiveThreshold = positiveThresholdsMap.get(channelType);
+                BigDecimal negativeMean = negativeMeansMap.get(channelType);
+                if ((!positiveThresholdsMap.isEmpty() && positiveThreshold == null) || (!negativeMeansMap.isEmpty() && negativeMean == null)) {
                     if (positiveThreshold == null) {
-                        IJ.log("No positive threshold found for" + channelType + " for " + name);
+                        IJ.log("No positive threshold found for " + channelType);
                     }
                     if (negativeMean == null) {
-                        IJ.log("No negative mean found for" + channelType + " for " + name);
+                        IJ.log("No negative mean found for " + channelType);
                     }
                 } else {
                     this.imageChannels.add(new ImageChannel(
+                            folder,
                             this.name,
                             imageChannel,
                             channelType,

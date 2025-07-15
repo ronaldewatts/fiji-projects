@@ -24,10 +24,8 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
-import java.util.Objects;
 import java.util.stream.Stream;
 
 @Plugin(name = "Fluorescence Intensity", type = Command.class, headless = true, menuPath = "UAB>Fluorescence Intensity")
@@ -106,9 +104,9 @@ public class FluorescenceIntensityPlugin implements Command {
         JPanel bodyPanel = new JPanel(new GridLayout(4, 1));
         bodyPanel.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
         bodyPanel.add(new JLabel("This plugin analyzes all images in the subdirectories of the directory chosen."));
-        bodyPanel.add(new JLabel("You must ensure that a 'Positive Control.tif` and 'Negative Control.tif' are defined at the root directory."));
+        bodyPanel.add(new JLabel("You must ensure that a 'Positive Control.tif` and 'Negative Control.tif' are defined at the root directory and are merged with Color Channel information available."));
+        bodyPanel.add(new JLabel("You can nest the images into subdirectories, organizing them as you see fit. Images can be merged or separated by channel, the channel information must be on the image."));
         bodyPanel.add(new JLabel("Results will be created as a CSV file called FluorescenceIntensity_{Root Directory}_{Timestamp}.csv in the root directory."));
-        bodyPanel.add(new JLabel("This file will be overwritten on each analysis of that directory."));
         showMessage(bodyPanel);
     }
 
@@ -140,6 +138,7 @@ public class FluorescenceIntensityPlugin implements Command {
             IJ.log("Processing directory:" + subDir);
             try (Stream<Path> stream = Files.walk(Paths.get(subDir))) {
                 stream.filter(path -> path.toString().endsWith(".tif"))
+                        .sorted(Comparator.comparing(Path::getFileName))
                         .forEach(path -> {
                             String absolutePath = path.toAbsolutePath().toString();
                             IJ.log("processing file: " + path.getFileName());
@@ -157,6 +156,7 @@ public class FluorescenceIntensityPlugin implements Command {
         try (Stream<Path> stream = Files.walk(Paths.get(rootDirectory))) {
             return stream
                     .filter(Files::isDirectory)
+                    .sorted(Comparator.comparing(Path::getFileName))
                     .map(Path::toString)
                     .filter(path -> !path.equals(rootDirectory))
                     .toList();
@@ -170,11 +170,11 @@ public class FluorescenceIntensityPlugin implements Command {
             String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmssSSS"));
             String dirName = Paths.get(rootDirectory).getFileName().toString();
             Path resultPath = Paths.get(rootDirectory, "FluorescenceIntensity_" + dirName + "_" + timestamp + ".csv");
-
+            String removablePath = new File(rootDirectory).getParentFile().getAbsolutePath();
             try (FileWriter writer = new FileWriter(resultPath.toFile())) {
                 writer.write(Measurement.toCsvHeader());
                 for (Measurement measurement : measurements) {
-                    writer.write(measurement.toCsvEntry());
+                    writer.write(measurement.toCsvEntry(removablePath));
                 }
             }
 

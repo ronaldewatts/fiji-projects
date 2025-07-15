@@ -7,7 +7,8 @@ public record Measurement(ImageChannel imageChannel, long area, BigDecimal mean,
                           long integratedDensity) {
 
     public static String toCsvHeader() {
-        return "Image Name," +
+        return "Folder," +
+                "Image Name," +
                 "Color," +
                 "Area," +
                 "Mean," +
@@ -21,8 +22,10 @@ public record Measurement(ImageChannel imageChannel, long area, BigDecimal mean,
                 System.lineSeparator();
     }
 
-    public String toCsvEntry() {
-        return imageChannel.name() + "," +
+    public String toCsvEntry(String removablePath) {
+        return
+                imageChannel.folder().replace(removablePath, "") + "," +
+                        imageChannel.name() + "," +
                 imageChannel.channelType() + "," +
                 area + "," +
                 mean + "," +
