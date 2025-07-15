@@ -55,7 +55,12 @@ public class FluorescenceIntensityPlugin implements Command {
         IJ.log("Running analysis of " + rootDirectory);
 
         IJ.log("=============Positive Control=================");
-        Image positiveImage = new Image(rootDirectory + "/Positive Control.tif");
+        String positiveControlFileLocation = rootDirectory + "/Positive Control.tif";
+        if (!new File(positiveControlFileLocation).exists()) {
+            IJ.log("No Positive Control.tif found. Exiting.");
+            System.exit(0);
+        }
+        Image positiveImage = new Image(positiveControlFileLocation);
         Map<ChannelType, Threshold> positiveThresholdMap = positiveImage.getThresholds();
         IJ.log(positiveImage.toString());
         IJ.log(positiveThresholdMap.toString());
@@ -65,7 +70,12 @@ public class FluorescenceIntensityPlugin implements Command {
         IJ.log("==============================================");
 
         IJ.log("=============Negative Control=================");
-        Image negativeImage = new Image(rootDirectory + "/Negative Control.tif");
+        String negativeControlImageLocation = rootDirectory + "/Negative Control.tif";
+        if (!new File(negativeControlImageLocation).exists()) {
+            IJ.log("No Negative Control.tif found. Exiting.");
+            System.exit(0);
+        }
+        Image negativeImage = new Image(negativeControlImageLocation);
         Map<ChannelType, BigDecimal> negativeMeansMap = negativeImage.getMeans();
         IJ.log(negativeImage.toString());
         IJ.log(negativeMeansMap.toString());
