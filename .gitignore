@@ -37,4 +37,5 @@ build/
 
 ### Mac OS ###
 .DS_Store
-/data/Cal3/Results.csv
+
+*.csv
