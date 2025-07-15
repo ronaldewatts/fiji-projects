@@ -86,14 +86,6 @@ public class Image {
         return measurements;
     }
 
-    public String getName() {
-        return name;
-    }
-
-    public List<ImageChannel> getImageChannels() {
-        return imageChannels;
-    }
-
     @Override
     public String toString() {
         return "Image{" +

@@ -133,17 +133,18 @@ public class FluorescenceIntensityPlugin implements Command {
 
     private List<Measurement> measure(List<String> imageDirectories, Map<ChannelType, Threshold> positiveThresholdMap, Map<ChannelType, BigDecimal> negativeMeansMap) {
         List<Measurement> measurements = new ArrayList<>();
-
+        Set<String> processedImages = new HashSet<>();
         for (String subDir : imageDirectories) {
-            IJ.log("Processing directory:" + subDir);
             try (Stream<Path> stream = Files.walk(Paths.get(subDir))) {
                 stream.filter(path -> path.toString().endsWith(".tif"))
-                        .sorted(Comparator.comparing(Path::getFileName))
                         .forEach(path -> {
                             String absolutePath = path.toAbsolutePath().toString();
-                            IJ.log("processing file: " + path.getFileName());
-                            Image image = new Image(absolutePath, positiveThresholdMap, negativeMeansMap);
-                            measurements.addAll(image.measure());
+                            if (!processedImages.contains(absolutePath)) {
+                                IJ.log("processing file: " + absolutePath);
+                                Image image = new Image(absolutePath, positiveThresholdMap, negativeMeansMap);
+                                measurements.addAll(image.measure());
+                                processedImages.add(absolutePath);
+                            }
                         });
             } catch (IOException e) {
                 throw new RuntimeException("Failed to process directory: " + subDir, e);
@@ -156,7 +157,6 @@ public class FluorescenceIntensityPlugin implements Command {
         try (Stream<Path> stream = Files.walk(Paths.get(rootDirectory))) {
             return stream
                     .filter(Files::isDirectory)
-                    .sorted(Comparator.comparing(Path::getFileName))
                     .map(Path::toString)
                     .filter(path -> !path.equals(rootDirectory))
                     .toList();
@@ -173,6 +173,10 @@ public class FluorescenceIntensityPlugin implements Command {
             String removablePath = new File(rootDirectory).getParentFile().getAbsolutePath();
             try (FileWriter writer = new FileWriter(resultPath.toFile())) {
                 writer.write(Measurement.toCsvHeader());
+                measurements.sort(
+                        Comparator.comparing((Measurement measurement) -> measurement.imageChannel().folder())
+                                .thenComparing((Measurement measurement) -> measurement.imageChannel().channelType())
+                );
                 for (Measurement measurement : measurements) {
                     writer.write(measurement.toCsvEntry(removablePath));
                 }
