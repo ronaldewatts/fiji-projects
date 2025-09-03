@@ -1,4 +1,4 @@
-package edu.uab.fiji.domain;
+package edu.uab.fiji.plugins.flourescenceintensity;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -8,24 +8,24 @@ public record Measurement(ImageChannel imageChannel, long area, BigDecimal mean,
 
     public static String toCsvHeader() {
         return "Folder," +
-                "Image Name," +
-                "Color," +
-                "Area," +
-                "Mean," +
-                "Min," +
-                "Max," +
-                "Integrated Density," +
-                "Integrated Density/Area," +
-                "Positive Threshold Min," +
-                "Positive Threshold Max," +
-                "Negative Mean" +
-                System.lineSeparator();
+            "Image Name," +
+            "Color," +
+            "Area," +
+            "Mean," +
+            "Min," +
+            "Max," +
+            "Integrated Density," +
+            "Integrated Density/Area," +
+            "Positive Threshold Min," +
+            "Positive Threshold Max," +
+            "Negative Mean" +
+            System.lineSeparator();
     }
 
     public String toCsvEntry(String removablePath) {
         return
-                imageChannel.folder().replace(removablePath, "") + "," +
-                        imageChannel.name() + "," +
+            imageChannel.folder().replace(removablePath, "") + "," +
+                imageChannel.name() + "," +
                 imageChannel.channelType() + "," +
                 area + "," +
                 mean + "," +

@@ -1,4 +1,4 @@
-package edu.uab.fiji.domain;
+package edu.uab.fiji.plugins.flourescenceintensity;
 
 import edu.uab.fiji.service.ResultsTableService;
 import ij.IJ;
@@ -48,12 +48,12 @@ public class Image {
                     }
                 } else {
                     this.imageChannels.add(new ImageChannel(
-                            folder,
-                            this.name,
-                            imageChannel,
-                            channelType,
-                            positiveThreshold,
-                            negativeMean)
+                        folder,
+                        this.name,
+                        imageChannel,
+                        channelType,
+                        positiveThreshold,
+                        negativeMean)
                     );
                 }
             }
@@ -89,8 +89,8 @@ public class Image {
     @Override
     public String toString() {
         return "Image{" +
-                "name='" + name + '\'' +
-                ", imageChannels=" + imageChannels +
-                '}';
+            "name='" + name + '\'' +
+            ", imageChannels=" + imageChannels +
+            '}';
     }
 }

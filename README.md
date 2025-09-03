@@ -17,3 +17,10 @@ main menu folder.
 This plugin analyzes images by measuring the individual color channels while applying the threshold from a
 `Positive Control.tif` image and the mean from a `Negative Control.tif` image. It writes a report called
 `FluorescenceIntensity_{Root Directory}_{Timestamp}.csv` in the root directory that was processed.
+
+### WGA Mask
+
+This plugin manipulates and analyzes images to measure and capture Total CALR and WGA-Mask CLR. It writes a report
+called
+`WGAMask_{Root Directory}_{Timestamp}.csv` in the root directory that was processed. It also saves CALR and WGA images
+in the image directories based on the 2 slices per image. These are saved as PNG files.

@@ -19,7 +19,7 @@ public class ResultsTableService {
     }
 
     public void reset() {
-        IJ.run("Set Measurements...", "area mean min integrated redirect=None decimal=3");
+        IJ.run("Set Measurements...", "area mean min integrated display redirect=None decimal=3");
         resultsTable.reset();
     }
 
@@ -36,6 +36,14 @@ public class ResultsTableService {
 
     public ResultsTable measure(ImagePlus imagePlus) {
         reset();
+        IJ.run(imagePlus, "Measure", "");
+        return resultsTable;
+    }
+
+    public ResultsTable measure(ImagePlus imagePlus, boolean reset) {
+        if (reset) {
+            reset();
+        }
         IJ.run(imagePlus, "Measure", "");
         return resultsTable;
     }

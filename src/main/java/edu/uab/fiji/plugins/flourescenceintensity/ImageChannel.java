@@ -1,4 +1,4 @@
-package edu.uab.fiji.domain;
+package edu.uab.fiji.plugins.flourescenceintensity;
 
 import edu.uab.fiji.service.ResultsTableService;
 import ij.IJ;

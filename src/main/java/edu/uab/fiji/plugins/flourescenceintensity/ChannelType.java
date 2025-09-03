@@ -1,4 +1,4 @@
-package edu.uab.fiji.domain;
+package edu.uab.fiji.plugins.flourescenceintensity;
 
 public enum ChannelType {
     CY5,
