@@ -227,7 +227,7 @@ public class WGAMaskPlugin extends BasePlugin {
         bodyPanel.add(new JLabel("This plugin analyzes all images in the subdirectories of the directory chosen using Green Fire Blue and Yellow LUTs."));
         bodyPanel.add(new JLabel("You must ensure that the .tif files contain exactly 2 slices."));
         bodyPanel.add(new JLabel("Image directories are expected to be in the name format '{Sex} {Treatment} {Mouse #}' as this is included in the results."));
-        bodyPanel.add(new JLabel("Along with results, CALR and WGA .png images will be created for each image in the image directory."));
+        bodyPanel.add(new JLabel("Along with results, MERGED, CALR and WGA .png images will be created for each image in the image directory."));
         bodyPanel.add(new JLabel("Results will be created as a CSV file called WGAMask_{Root Directory}_{Timestamp}.csv in the root directory."));
         showMessage(bodyPanel, "WGA Mask");
     }

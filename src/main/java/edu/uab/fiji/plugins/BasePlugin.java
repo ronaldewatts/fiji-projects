@@ -45,7 +45,9 @@ public abstract class BasePlugin implements Command {
         ResultsTableService.INSTANCE.reset();
         if (System.getProperty("ide") == null) {
             TextWindow resultsWindow = (TextWindow) WindowManager.getWindow("Results");
-            resultsWindow.close();
+            if (resultsWindow != null) {
+                resultsWindow.close();
+            }
         }
 
         String resultFileAbsolutePath = resultFile.getAbsolutePath();
