@@ -38,14 +38,14 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Stream;
 
-@Plugin(name = "WGA Mask", type = Command.class, headless = true, menuPath = "UAB>WGA Mask")
-public class WGAMaskPlugin extends BasePlugin {
+@Plugin(name = "WGA Mask Alt Colors", type = Command.class, headless = true, menuPath = "UAB>WGA Mask Alt Colors")
+public class WGAMaskAltColorsPlugin extends BasePlugin {
 
     public static void main(String[] args) {
         System.setProperty("ide", "true");
 
         // To test, run this main and select the directory <project>/data/Colon Images
-        new WGAMaskPlugin().run();
+        new WGAMaskAltColorsPlugin().run();
     }
 
     @Override
@@ -56,12 +56,12 @@ public class WGAMaskPlugin extends BasePlugin {
 
         try (Context context = new Context()) {
             LUTService lutService = context.getService(LUTService.class);
-            ColorTable8 greenFireBlue;
-            ColorTable8 yellow;
+            ColorTable8 cyanHot;
+            ColorTable8 orangeHot;
             try {
                 Map<String, URL> luTs = lutService.findLUTs();
-                greenFireBlue = (ColorTable8) lutService.loadLUT(luTs.get("WCIF/Green Fire Blue.lut"));
-                yellow = (ColorTable8) lutService.loadLUT(luTs.get("Yellow.lut"));
+                cyanHot = (ColorTable8) lutService.loadLUT(luTs.get("WCIF/Cyan Hot.lut"));
+                orangeHot = (ColorTable8) lutService.loadLUT(luTs.get("WCIF/Orange Hot.lut"));
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
@@ -106,8 +106,8 @@ public class WGAMaskPlugin extends BasePlugin {
                                     slice1Duplicate.setTitle(parentFolder + "/WGA-mask CALR/" + imageNumber);
                                     measurements.add(getMeasurement(slice1Duplicate));
 
-                                    slice1.setLut(new LUT(greenFireBlue.getValues()[0], greenFireBlue.getValues()[1], greenFireBlue.getValues()[2]));
-                                    slice2.setLut(new LUT(yellow.getValues()[0], yellow.getValues()[1], yellow.getValues()[2]));
+                                    slice1.setLut(new LUT(cyanHot.getValues()[0], cyanHot.getValues()[1], cyanHot.getValues()[2]));
+                                    slice2.setLut(new LUT(orangeHot.getValues()[0], orangeHot.getValues()[1], orangeHot.getValues()[2]));
                                     ImagePlus composite = RGBStackMerge.mergeChannels(new ImagePlus[]{slice1, slice2}, true);
 
                                     IJ.run(slice1, "Calibration Bar...", "location=[Upper Right] fill=White label=Black number=2 decimal=0 font=12 zoom=3 overlay");
@@ -206,7 +206,7 @@ public class WGAMaskPlugin extends BasePlugin {
         try {
             String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmssSSS"));
             String dirName = Paths.get(rootDirectory).getFileName().toString();
-            Path resultPath = Paths.get(rootDirectory, "WGAMask_" + dirName + "_" + timestamp + ".csv");
+            Path resultPath = Paths.get(rootDirectory, "WGAMaskAltColors_" + dirName + "_" + timestamp + ".csv");
             try (FileWriter writer = new FileWriter(resultPath.toFile())) {
                 writer.write(Measurement.toCsvHeader());
                 for (Measurement measurement : measurements) {
@@ -224,7 +224,7 @@ public class WGAMaskPlugin extends BasePlugin {
     public void showStartupMessage() {
         JPanel bodyPanel = new JPanel(new GridLayout(5, 1));
         bodyPanel.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
-        bodyPanel.add(new JLabel("This plugin analyzes all images in the subdirectories of the directory chosen using Green Fire Blue and Yellow LUTs."));
+        bodyPanel.add(new JLabel("This plugin analyzes all images in the subdirectories of the directory chosen using Cyan Hot and Orange Hot LUTs."));
         bodyPanel.add(new JLabel("You must ensure that the .tif files contain exactly 2 slices."));
         bodyPanel.add(new JLabel("Image directories are expected to be in the name format '{Sex} {Treatment} {Mouse #}' as this is included in the results."));
         bodyPanel.add(new JLabel("Along with results, CALR and WGA .png images will be created for each image in the image directory."));
@@ -236,10 +236,10 @@ public class WGAMaskPlugin extends BasePlugin {
     public void showCompletionMessage(String fileLocation) {
         JPanel bodyPanel = new JPanel(new GridLayout(3, 1));
         bodyPanel.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
-        bodyPanel.add(new JLabel("WGA Mask completed. Results can be found at:"));
+        bodyPanel.add(new JLabel("WGA Mask Alt Colors completed. Results can be found at:"));
         bodyPanel.add(new JLabel(""));
         bodyPanel.add(new JLabel(fileLocation));
-        showMessage(bodyPanel, "WGA Mask");
+        showMessage(bodyPanel, "WGA Mask Alt Colors");
     }
 
 }
