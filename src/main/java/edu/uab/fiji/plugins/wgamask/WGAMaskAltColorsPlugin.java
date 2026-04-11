@@ -79,7 +79,7 @@ public class WGAMaskAltColorsPlugin extends BasePlugin {
 
                                 String parentFolder = path.getParent().getFileName().toString().replace(" ", "/");
                                 ImagePlus image = IJ.openImage(absolutePath);
-                                if (image.getStackSize() == 2) {
+                                if (image.getStackSize() >= 2) {
                                     IJ.run(image, "Subtract Background...", "rolling=25 stack");
                                     String imageNumber = image.getTitle().replace(".tif", "");
 
@@ -90,7 +90,7 @@ public class WGAMaskAltColorsPlugin extends BasePlugin {
                                     slice1Duplicate.setTitle(parentFolder + "/Total CALR/" + imageNumber);
                                     measurements.add(getMeasurement(slice1Duplicate));
 
-                                    ImagePlus slice2 = slices.getLast();
+                                    ImagePlus slice2 = slices.get(1);
                                     ImagePlus slice2Duplicate = slice2.duplicate();
                                     slice2.setAutoThreshold("Intermodes");
                                     IJ.run(slice2, "Create Selection", "");
