@@ -15,6 +15,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Stream;
 
@@ -29,7 +30,7 @@ public abstract class BasePlugin implements Command {
             throw new RuntimeException(e);
         }
 
-        showStartupMessage();
+        Map<String, Object> inputs = showStartupMessage();
 
         IJ.log("\\Clear");
 
@@ -40,7 +41,7 @@ public abstract class BasePlugin implements Command {
         String rootDirectory = od.getDirectory().substring(0, od.getDirectory().length() - 1); // Remove trailing /
         IJ.log("Running analysis of " + rootDirectory);
 
-        File resultFile = buildResultsFile(rootDirectory);
+        File resultFile = buildResultsFile(inputs, rootDirectory);
 
         ResultsTableService.INSTANCE.reset();
         if (System.getProperty("ide") == null) {
@@ -56,9 +57,9 @@ public abstract class BasePlugin implements Command {
         showCompletionMessage(resultFileAbsolutePath);
     }
 
-    public abstract File buildResultsFile(String rootDirectory);
+    public abstract File buildResultsFile(Map<String, Object> inputs, String rootDirectory);
 
-    public abstract void showStartupMessage();
+    public abstract Map<String, Object> showStartupMessage();
 
     public abstract void showCompletionMessage(String resultFileAbsolutePath);
 

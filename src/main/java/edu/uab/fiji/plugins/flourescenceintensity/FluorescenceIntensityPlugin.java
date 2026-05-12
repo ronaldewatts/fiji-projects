@@ -36,7 +36,7 @@ public class FluorescenceIntensityPlugin extends BasePlugin {
     }
 
     @Override
-    public File buildResultsFile(String rootDirectory) {
+    public File buildResultsFile(Map<String, Object> inputs, String rootDirectory) {
         ThresholdAdjuster.setMode("B&W");
 
         IJ.log("=============Positive Control=================");
@@ -77,7 +77,7 @@ public class FluorescenceIntensityPlugin extends BasePlugin {
     }
 
     @Override
-    public void showStartupMessage() {
+    public Map<String, Object> showStartupMessage() {
         JPanel bodyPanel = new JPanel(new GridLayout(4, 1));
         bodyPanel.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
         bodyPanel.add(new JLabel("This plugin analyzes all images in the subdirectories of the directory chosen."));
@@ -85,6 +85,7 @@ public class FluorescenceIntensityPlugin extends BasePlugin {
         bodyPanel.add(new JLabel("You can nest the images into subdirectories, organizing them as you see fit. Images can be merged or separated by channel, the channel information must be on the image."));
         bodyPanel.add(new JLabel("Results will be created as a CSV file called FluorescenceIntensity_{Root Directory}_{Timestamp}.csv in the root directory."));
         showMessage(bodyPanel, "Fluorescence Intensity");
+        return Map.of();
     }
 
     @Override

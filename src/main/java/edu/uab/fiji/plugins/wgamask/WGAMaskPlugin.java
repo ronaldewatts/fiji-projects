@@ -49,7 +49,7 @@ public class WGAMaskPlugin extends BasePlugin {
     }
 
     @Override
-    public File buildResultsFile(String rootDirectory) {
+    public File buildResultsFile(Map<String, Object> inputs, String rootDirectory) {
         List<String> imageDirectories = getImageDirectories(rootDirectory);
         Set<String> processedImages = new HashSet<>();
         List<Measurement> measurements = new ArrayList<>();
@@ -221,7 +221,7 @@ public class WGAMaskPlugin extends BasePlugin {
     }
 
     @Override
-    public void showStartupMessage() {
+    public Map<String, Object> showStartupMessage() {
         JPanel bodyPanel = new JPanel(new GridLayout(5, 1));
         bodyPanel.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
         bodyPanel.add(new JLabel("This plugin analyzes all images in the subdirectories of the directory chosen using Green Fire Blue and Yellow LUTs."));
@@ -230,6 +230,7 @@ public class WGAMaskPlugin extends BasePlugin {
         bodyPanel.add(new JLabel("Along with results, MERGED, CALR and WGA .png images will be created for each image in the image directory."));
         bodyPanel.add(new JLabel("Results will be created as a CSV file called WGAMask_{Root Directory}_{Timestamp}.csv in the root directory."));
         showMessage(bodyPanel, "WGA Mask");
+        return Map.of();
     }
 
     @Override
