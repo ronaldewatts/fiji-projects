@@ -36,17 +36,19 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
 @Plugin(name = "WGA Mask Alt Colors", type = Command.class, headless = true, menuPath = "UAB>WGA Mask Alt Colors")
 public class WGAMaskAltColorsPlugin extends BasePlugin {
 
     public static final String INPUT_MAXIMUM_BRIGHTNESS = "maximumBrightness";
+
+    private static final Pattern DIGITS = Pattern.compile("\\d+");
 
     public static void main(String[] args) {
         System.setProperty("ide", "true");
@@ -60,6 +62,7 @@ public class WGAMaskAltColorsPlugin extends BasePlugin {
         List<String> imageDirectories = getImageDirectories(rootDirectory);
         Set<String> processedImages = new HashSet<>();
         List<Measurement> measurements = new ArrayList<>();
+        Double maximumBrightness = (Double) inputs.get(INPUT_MAXIMUM_BRIGHTNESS);
 
         try (Context context = new Context()) {
             LUTService lutService = context.getService(LUTService.class);
@@ -117,9 +120,8 @@ public class WGAMaskAltColorsPlugin extends BasePlugin {
                                     slice2.setLut(new LUT(orangeHot.getValues()[0], orangeHot.getValues()[1], orangeHot.getValues()[2]));
                                     ImagePlus composite = RGBStackMerge.mergeChannels(new ImagePlus[]{slice1, slice2}, true);
 
-                                    Object maximumBrightness = inputs.get(INPUT_MAXIMUM_BRIGHTNESS);
                                     if (maximumBrightness != null) {
-                                        slice1.setDisplayRange(0, Double.parseDouble(String.valueOf(maximumBrightness)));
+                                        slice1.setDisplayRange(0, maximumBrightness);
                                     }
 
                                     IJ.run(slice1, "Calibration Bar...", "location=[Upper Right] fill=White label=Black number=2 decimal=0 font=12 zoom=3 overlay");
@@ -236,12 +238,11 @@ public class WGAMaskAltColorsPlugin extends BasePlugin {
     public Map<String, Object> showStartupMessage() {
         JTextField maximumBrightnessField = new JTextField(10);
 
-        // Restrict input to whole integers only
         ((AbstractDocument) maximumBrightnessField.getDocument()).setDocumentFilter(new DocumentFilter() {
             @Override
             public void insertString(FilterBypass fb, int offset, String string, AttributeSet attr)
                 throws BadLocationException {
-                if (string != null && string.matches("\\d+")) {
+                if (string != null && DIGITS.matcher(string).matches()) {
                     super.insertString(fb, offset, string, attr);
                 }
             }
@@ -249,13 +250,12 @@ public class WGAMaskAltColorsPlugin extends BasePlugin {
             @Override
             public void replace(DocumentFilter.FilterBypass fb, int offset, int length, String text, AttributeSet attrs)
                 throws BadLocationException {
-                if (text != null && text.matches("\\d+")) {
+                if (text != null && DIGITS.matcher(text).matches()) {
                     super.replace(fb, offset, length, text, attrs);
                 }
             }
         });
 
-        // Top text block
         JPanel textPanel = new JPanel(new GridLayout(5, 1));
         textPanel.setBorder(BorderFactory.createEmptyBorder(15, 15, 0, 15));
         textPanel.add(new JLabel("This plugin analyzes all images in the subdirectories of the directory chosen using Cyan Hot and Orange Hot LUTs."));
@@ -281,10 +281,9 @@ public class WGAMaskAltColorsPlugin extends BasePlugin {
 
         showMessage(bodyPanel, "WGA Mask");
 
-        Map<String, Object> result = new HashMap<>();
         String text = maximumBrightnessField.getText().trim();
-        result.put(INPUT_MAXIMUM_BRIGHTNESS, text.isEmpty() ? null : text);
-        return result;
+        if (text.isEmpty()) return Map.of();
+        return Map.of(INPUT_MAXIMUM_BRIGHTNESS, Double.parseDouble(text));
     }
 
     @Override
