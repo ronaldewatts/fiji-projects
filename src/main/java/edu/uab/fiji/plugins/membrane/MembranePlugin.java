@@ -1,4 +1,4 @@
-package edu.uab.fiji.plugins.wgamask;
+package edu.uab.fiji.plugins.membrane;
 
 import edu.uab.fiji.plugins.BasePlugin;
 import edu.uab.fiji.service.ResultsTableService;
@@ -43,8 +43,8 @@ import java.util.Set;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
-@Plugin(name = "WGA Mask Alt Colors", type = Command.class, headless = true, menuPath = "UAB>WGA Mask Alt Colors")
-public class WGAMaskAltColorsPlugin extends BasePlugin {
+@Plugin(name = "Membrane", type = Command.class, headless = true, menuPath = "UAB>Membrane")
+public class MembranePlugin extends BasePlugin {
 
     public static final String INPUT_MAXIMUM_BRIGHTNESS = "maximumBrightness";
 
@@ -54,7 +54,7 @@ public class WGAMaskAltColorsPlugin extends BasePlugin {
         System.setProperty("ide", "true");
 
         // To test, run this main and select the directory <project>/data/Colon Images
-        new WGAMaskAltColorsPlugin().run();
+        new MembranePlugin().run();
     }
 
     @Override
@@ -102,18 +102,16 @@ public class WGAMaskAltColorsPlugin extends BasePlugin {
 
                                     ImagePlus slice2 = slices.get(1);
                                     ImagePlus slice2Duplicate = slice2.duplicate();
-                                    slice2.setAutoThreshold("Intermodes");
-                                    IJ.run(slice2, "Create Selection", "");
                                     Roi slice2Roi = slice2.getRoi();
                                     slice2Duplicate.setRoi(slice2Roi);
                                     IJ.run(slice2Duplicate, "Clear Outside", "");
                                     IJ.run(slice2Duplicate, "Select None", "");
-                                    slice2Duplicate.setAutoThreshold("Huang dark");
+                                    slice2Duplicate.setAutoThreshold("IsoData dark");
                                     IJ.run(slice2Duplicate, "Create Selection", "");
                                     Roi slice2DuplicateRoi = slice2Duplicate.getRoi();
 
                                     slice1Duplicate.setRoi(slice2DuplicateRoi);
-                                    slice1Duplicate.setTitle(parentFolder + "/WGA-mask CALR/" + imageNumber);
+                                    slice1Duplicate.setTitle(parentFolder + "/Membrane CALR/" + imageNumber);
                                     measurements.add(getMeasurement(slice1Duplicate));
 
                                     slice1.setLut(new LUT(cyanHot.getValues()[0], cyanHot.getValues()[1], cyanHot.getValues()[2]));
@@ -126,7 +124,7 @@ public class WGAMaskAltColorsPlugin extends BasePlugin {
 
                                     IJ.run(slice1, "Calibration Bar...", "location=[Upper Right] fill=White label=Black number=2 decimal=0 font=12 zoom=3 overlay");
                                     IJ.saveAs(slice1, "PNG", path.getParent().toAbsolutePath() + "/" + imageNumber + "_CALR_RBS25.png");
-                                    IJ.saveAs(slice2, "PNG", path.getParent().toAbsolutePath() + "/" + imageNumber + "_WGA_RBS25.png");
+                                    IJ.saveAs(slice2, "PNG", path.getParent().toAbsolutePath() + "/" + imageNumber + "_Membrane_RBS25.png");
                                     IJ.saveAs(composite, "PNG", path.getParent().toAbsolutePath() + "/" + imageNumber + "_MERGED_RBS25.png");
 
                                 } else {
@@ -220,7 +218,7 @@ public class WGAMaskAltColorsPlugin extends BasePlugin {
         try {
             String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmssSSS"));
             String dirName = Paths.get(rootDirectory).getFileName().toString();
-            Path resultPath = Paths.get(rootDirectory, "WGAMaskAltColors_" + dirName + "_" + timestamp + ".csv");
+            Path resultPath = Paths.get(rootDirectory, "Membrane_" + dirName + "_" + timestamp + ".csv");
             try (FileWriter writer = new FileWriter(resultPath.toFile())) {
                 writer.write(Measurement.toCsvHeader());
                 for (Measurement measurement : measurements) {
@@ -248,7 +246,7 @@ public class WGAMaskAltColorsPlugin extends BasePlugin {
             }
 
             @Override
-            public void replace(DocumentFilter.FilterBypass fb, int offset, int length, String text, AttributeSet attrs)
+            public void replace(FilterBypass fb, int offset, int length, String text, AttributeSet attrs)
                 throws BadLocationException {
                 if (text != null && DIGITS.matcher(text).matches()) {
                     super.replace(fb, offset, length, text, attrs);
@@ -261,8 +259,8 @@ public class WGAMaskAltColorsPlugin extends BasePlugin {
         textPanel.add(new JLabel("This plugin analyzes all images in the subdirectories of the directory chosen using Cyan Hot and Orange Hot LUTs."));
         textPanel.add(new JLabel("You must ensure that the .tif files contain exactly 2 slices."));
         textPanel.add(new JLabel("Image directories are expected to be in the name format '{Sex} {Treatment} {Mouse #}' as this is included in the results."));
-        textPanel.add(new JLabel("Along with results, MERGED, CALR and WGA .png images will be created for each image in the image directory."));
-        textPanel.add(new JLabel("Results will be created as a CSV file called WGAMaskAltColors_{Root Directory}_{Timestamp}.csv in the root directory."));
+        textPanel.add(new JLabel("Along with results, MERGED, CALR and Membrane .png images will be created for each image in the image directory."));
+        textPanel.add(new JLabel("Results will be created as a CSV file called Membrane_{Root Directory}_{Timestamp}.csv in the root directory."));
 
         JPanel separatorPanel = new JPanel(new BorderLayout());
         separatorPanel.setBorder(BorderFactory.createEmptyBorder(8, 15, 8, 15));
@@ -279,7 +277,7 @@ public class WGAMaskAltColorsPlugin extends BasePlugin {
         bodyPanel.add(separatorPanel);
         bodyPanel.add(inputPanel);
 
-        showMessage(bodyPanel, "WGA Mask Alt Colors");
+        showMessage(bodyPanel, "Membrane");
 
         String text = maximumBrightnessField.getText().trim();
         if (text.isEmpty()) return Map.of();
@@ -290,10 +288,10 @@ public class WGAMaskAltColorsPlugin extends BasePlugin {
     public void showCompletionMessage(String fileLocation) {
         JPanel bodyPanel = new JPanel(new GridLayout(3, 1));
         bodyPanel.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
-        bodyPanel.add(new JLabel("WGA Mask Alt Colors completed. Results can be found at:"));
+        bodyPanel.add(new JLabel("Membrane completed. Results can be found at:"));
         bodyPanel.add(new JLabel(""));
         bodyPanel.add(new JLabel(fileLocation));
-        showMessage(bodyPanel, "WGA Mask Alt Colors");
+        showMessage(bodyPanel, "Membrane");
     }
 
 }

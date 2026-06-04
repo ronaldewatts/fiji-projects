@@ -1,26 +1,106 @@
 # UAB Fiji Plugins
 
 These plugins are designed to simplify tasks traditionally done manually within
-the [Fiji](https://imagej.net/software/fiji/)
-system. The maven command ran from the command line does not generate the `META-INF/json/org.scijava.plugin.Plugin`
-file so `clean` and `install` must be ran from IntelliJ. I believe this has to do with the fact that this project
-uses the Java version found in the Fiji installation.
+the [Fiji](https://imagej.net/software/fiji/) system.
 
-The resulting JAR file will be the `{project_root}/target` directory named `fiji-plugins-{version}.jar`.
-The plugin can then be installed Fiji via `Plugins > Install...` and restarting. The Plugins will be under the `UAB`
-main menu folder.
+> **Note:** The Maven command run from the command line does not generate the
+> `META-INF/json/org.scijava.plugin.Plugin` file, so `clean` and `install` must
+> be run from IntelliJ. This is likely related to the project using the Java
+> version found in the Fiji installation.
+
+The resulting JAR will be placed in `{project_root}/target/` as
+`uab-fiji-plugins-{version}.jar`. Install it via `Plugins > Install...` in Fiji
+and restart. All plugins appear under the `UAB` menu.
+
+---
 
 ## Available Plugins
 
 ### Fluorescence Intensity
 
-This plugin analyzes images by measuring the individual color channels while applying the threshold from a
-`Positive Control.tif` image and the mean from a `Negative Control.tif` image. It writes a report called
-`FluorescenceIntensity_{Root Directory}_{Timestamp}.csv` in the root directory that was processed.
+Measures per-channel fluorescence intensity across all `.tif` images in the
+subdirectories of a chosen root directory. Before running, place a
+`Positive Control.tif` and a `Negative Control.tif` at the root directory —
+both must be multi-channel merged images with color channel information. The
+plugin derives per-channel thresholds from the positive control and background
+means from the negative control, then applies them when measuring each sample
+image. Images may be merged or separated by channel and can be nested in
+subdirectories.
+
+**Output:** `FluorescenceIntensity_{RootDirectory}_{Timestamp}.csv` written to
+the root directory. Columns: folder, channel type, area, mean, min, max, and
+integrated density.
+
+---
 
 ### WGA Mask
 
-This plugin manipulates and analyzes images to measure and capture Total CALR and WGA-Mask CLR. It writes a report
-called
-`WGAMask_{Root Directory}_{Timestamp}.csv` in the root directory that was processed. It also saves CALR and WGA images
-in the image directories based on the 2 slices per image. These are saved as PNG files.
+Quantifies CALR (calreticulin) signal both in full cells and within the
+WGA-defined cell membrane region across all `.tif` images in the subdirectories
+of a chosen root directory. Each `.tif` must be a two-slice stack where slice 1
+is the CALR channel and slice 2 is the WGA channel. Rolling-ball background
+subtraction (radius 25) is applied to the full stack before analysis.
+
+The plugin produces two measurements per image:
+
+- **Total CALR** — Huang dark auto-threshold applied to the CALR slice
+- **WGA-mask CALR** — Intermodes threshold applied to the WGA slice to create
+  an ROI, which is then transferred to the CALR slice before Huang dark
+  thresholding
+
+CALR images are rendered with the **Green Fire Blue** LUT and WGA images with
+the **Yellow** LUT. Image directories must be named `{Sex} {Treatment} {Mouse #}`
+as these fields are parsed into the results.
+
+**Output:**
+
+- `WGAMask_{RootDirectory}_{Timestamp}.csv` — columns: sex, treatment, mouse
+  number, stain, image number, area, mean, min, max, integrated density
+- `{ImageNumber}_CALR_RBS25.png`, `{ImageNumber}_WGA_RBS25.png`,
+  `{ImageNumber}_MERGED_RBS25.png` saved alongside each source image
+
+---
+
+### WGA Mask Alt Colors
+
+Identical in analysis to [WGA Mask](#wga-mask) — same two-slice stack
+requirement, same rolling-ball background subtraction, same Huang dark / WGA
+Intermodes thresholding logic — but renders images with the **Cyan Hot** LUT
+for CALR and the **Orange Hot** LUT for WGA. This variant also accepts an
+optional **Maximum Brightness** input at startup that sets the display range
+ceiling for the CALR channel before saving PNGs, which helps normalize
+visualization across datasets with varying intensity scales.
+
+**Output:**
+
+- `WGAMaskAltColors_{RootDirectory}_{Timestamp}.csv` — same columns as WGA Mask
+- `{ImageNumber}_CALR_RBS25.png`, `{ImageNumber}_WGA_RBS25.png`,
+  `{ImageNumber}_MERGED_RBS25.png` saved alongside each source image
+
+---
+
+### Membrane
+
+Quantifies CALR signal both in total cells and restricted to the cell membrane
+region across all `.tif` images in the subdirectories of a chosen root
+directory. Each `.tif` must be a two-slice stack where slice 1 is the CALR
+channel and slice 2 is the membrane marker channel. Rolling-ball background
+subtraction (radius 25) is applied before analysis.
+
+The plugin produces two measurements per image:
+
+- **Total CALR** — Huang dark auto-threshold applied to the CALR slice
+- **Membrane CALR** — IsoData dark auto-threshold applied to the membrane slice
+  to create an ROI, which is then transferred to the CALR slice for measurement
+
+Images are rendered with the **Cyan Hot** LUT for CALR and **Orange Hot** for
+the membrane channel. Like WGA Mask Alt Colors, an optional **Maximum
+Brightness** input can be provided to cap the CALR display range. Image
+directories must be named `{Sex} {Treatment} {Mouse #}`.
+
+**Output:**
+
+- `Membrane_{RootDirectory}_{Timestamp}.csv` — columns: sex, treatment, mouse
+  number, stain, image number, area, mean, min, max, integrated density
+- `{ImageNumber}_CALR_RBS25.png`, `{ImageNumber}_Membrane_RBS25.png`,
+  `{ImageNumber}_MERGED_RBS25.png` saved alongside each source image
