@@ -101,16 +101,11 @@ public class MembranePlugin extends BasePlugin {
                                     measurements.add(getMeasurement(slice1Duplicate));
 
                                     ImagePlus slice2 = slices.get(1);
-                                    ImagePlus slice2Duplicate = slice2.duplicate();
+                                    slice2.setAutoThreshold("IsoData dark");
+                                    IJ.run(slice2, "Create Selection", "");
                                     Roi slice2Roi = slice2.getRoi();
-                                    slice2Duplicate.setRoi(slice2Roi);
-                                    IJ.run(slice2Duplicate, "Clear Outside", "");
-                                    IJ.run(slice2Duplicate, "Select None", "");
-                                    slice2Duplicate.setAutoThreshold("IsoData dark");
-                                    IJ.run(slice2Duplicate, "Create Selection", "");
-                                    Roi slice2DuplicateRoi = slice2Duplicate.getRoi();
 
-                                    slice1Duplicate.setRoi(slice2DuplicateRoi);
+                                    slice1Duplicate.setRoi(slice2Roi);
                                     slice1Duplicate.setTitle(parentFolder + "/Membrane CALR/" + imageNumber);
                                     measurements.add(getMeasurement(slice1Duplicate));
 
