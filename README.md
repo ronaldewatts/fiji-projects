@@ -12,6 +12,13 @@ The resulting JAR will be placed in `{project_root}/target/` as
 `uab-fiji-plugins-{version}.jar`. Install it via `Plugins > Install...` in Fiji
 and restart. All plugins appear under the `UAB` menu.
 
+Every plugin's startup screen includes a **Delete previously generated files in
+this directory before running** checkbox (checked by default). When left
+checked, the plugin removes its own prior outputs — the generated PNGs and the
+result CSVs it had written into the chosen directory tree — before processing,
+so re-runs don't accumulate stale files. Source `.tif` images and unrelated
+files are never touched. Uncheck it to keep earlier outputs.
+
 ---
 
 ## Available Plugins
@@ -89,14 +96,16 @@ subtraction (radius 25) is applied before analysis.
 
 The plugin produces two measurements per image:
 
-- **Total CALR** — Huang dark auto-threshold applied to the CALR slice
+- **Total CALR** — IsoData dark auto-threshold applied to the CALR slice
 - **Membrane CALR** — IsoData dark auto-threshold applied to the membrane slice
   to create an ROI, which is then transferred to the CALR slice for measurement
 
 Images are rendered with the **Cyan Hot** LUT for CALR and **Orange Hot** for
 the membrane channel. Like WGA Mask Alt Colors, an optional **Maximum
-Brightness** input can be provided to cap the CALR display range. Image
-directories must be named `{Sex} {Treatment} {Mouse #}`.
+Brightness** input can be provided to cap the CALR display range; the membrane
+channel display range is auto-adjusted (equivalent to Fiji's B&C **Auto**)
+before its PNG is saved. Image directories must be named
+`{Sex} {Treatment} {Mouse #}`.
 
 **Output:**
 

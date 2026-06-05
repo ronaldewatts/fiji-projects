@@ -23,6 +23,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
 @Plugin(name = "Fluorescence Intensity", type = Command.class, headless = true, menuPath = "UAB>Fluorescence Intensity")
@@ -77,15 +78,37 @@ public class FluorescenceIntensityPlugin extends BasePlugin {
     }
 
     @Override
+    protected List<Pattern> getGeneratedFilePatterns() {
+        return List.of(Pattern.compile("FluorescenceIntensity_.*\\.csv"));
+    }
+
+    @Override
     public Map<String, Object> showStartupMessage() {
-        JPanel bodyPanel = new JPanel(new GridLayout(4, 1));
-        bodyPanel.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
-        bodyPanel.add(new JLabel("This plugin analyzes all images in the subdirectories of the directory chosen."));
-        bodyPanel.add(new JLabel("You must ensure that a 'Positive Control.tif` and 'Negative Control.tif' are defined at the root directory and are merged with Color Channel information available."));
-        bodyPanel.add(new JLabel("You can nest the images into subdirectories, organizing them as you see fit. Images can be merged or separated by channel, the channel information must be on the image."));
-        bodyPanel.add(new JLabel("Results will be created as a CSV file called FluorescenceIntensity_{Root Directory}_{Timestamp}.csv in the root directory."));
+        JCheckBox cleanGeneratedFilesCheckBox = new JCheckBox("Delete previously generated files in this directory before running?", true);
+
+        JPanel textPanel = new JPanel(new GridLayout(4, 1));
+        textPanel.setBorder(BorderFactory.createEmptyBorder(15, 15, 0, 15));
+        textPanel.add(new JLabel("This plugin analyzes all images in the subdirectories of the directory chosen."));
+        textPanel.add(new JLabel("You must ensure that a 'Positive Control.tif` and 'Negative Control.tif' are defined at the root directory and are merged with Color Channel information available."));
+        textPanel.add(new JLabel("You can nest the images into subdirectories, organizing them as you see fit. Images can be merged or separated by channel, the channel information must be on the image."));
+        textPanel.add(new JLabel("Results will be created as a CSV file called FluorescenceIntensity_{Root Directory}_{Timestamp}.csv in the root directory."));
+
+        JPanel separatorPanel = new JPanel(new BorderLayout());
+        separatorPanel.setBorder(BorderFactory.createEmptyBorder(8, 15, 8, 15));
+        separatorPanel.add(new JSeparator(), BorderLayout.CENTER);
+
+        JPanel inputPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 15, 0));
+        inputPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 15, 15));
+        inputPanel.add(cleanGeneratedFilesCheckBox);
+
+        JPanel bodyPanel = new JPanel();
+        bodyPanel.setLayout(new BoxLayout(bodyPanel, BoxLayout.Y_AXIS));
+        bodyPanel.add(textPanel);
+        bodyPanel.add(separatorPanel);
+        bodyPanel.add(inputPanel);
+
         showMessage(bodyPanel, "Fluorescence Intensity");
-        return Map.of();
+        return Map.of(INPUT_CLEAN_GENERATED_FILES, cleanGeneratedFilesCheckBox.isSelected());
     }
 
     @Override

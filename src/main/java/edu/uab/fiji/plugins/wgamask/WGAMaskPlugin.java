@@ -36,6 +36,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
 @Plugin(name = "WGA Mask", type = Command.class, headless = true, menuPath = "UAB>WGA Mask")
@@ -221,16 +222,43 @@ public class WGAMaskPlugin extends BasePlugin {
     }
 
     @Override
+    protected List<Pattern> getGeneratedFilePatterns() {
+        return List.of(
+            Pattern.compile(".*_CALR_RBS25\\.png"),
+            Pattern.compile(".*_WGA_RBS25\\.png"),
+            Pattern.compile(".*_MERGED_RBS25\\.png"),
+            Pattern.compile("WGAMask_.*\\.csv")
+        );
+    }
+
+    @Override
     public Map<String, Object> showStartupMessage() {
-        JPanel bodyPanel = new JPanel(new GridLayout(5, 1));
-        bodyPanel.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
-        bodyPanel.add(new JLabel("This plugin analyzes all images in the subdirectories of the directory chosen using Green Fire Blue and Yellow LUTs."));
-        bodyPanel.add(new JLabel("You must ensure that the .tif files contain exactly 2 slices."));
-        bodyPanel.add(new JLabel("Image directories are expected to be in the name format '{Sex} {Treatment} {Mouse #}' as this is included in the results."));
-        bodyPanel.add(new JLabel("Along with results, MERGED, CALR and WGA .png images will be created for each image in the image directory."));
-        bodyPanel.add(new JLabel("Results will be created as a CSV file called WGAMask_{Root Directory}_{Timestamp}.csv in the root directory."));
+        JCheckBox cleanGeneratedFilesCheckBox = new JCheckBox("Delete previously generated files in this directory before running?", true);
+
+        JPanel textPanel = new JPanel(new GridLayout(5, 1));
+        textPanel.setBorder(BorderFactory.createEmptyBorder(15, 15, 0, 15));
+        textPanel.add(new JLabel("This plugin analyzes all images in the subdirectories of the directory chosen using Green Fire Blue and Yellow LUTs."));
+        textPanel.add(new JLabel("You must ensure that the .tif files contain exactly 2 slices."));
+        textPanel.add(new JLabel("Image directories are expected to be in the name format '{Sex} {Treatment} {Mouse #}' as this is included in the results."));
+        textPanel.add(new JLabel("Along with results, MERGED, CALR and WGA .png images will be created for each image in the image directory."));
+        textPanel.add(new JLabel("Results will be created as a CSV file called WGAMask_{Root Directory}_{Timestamp}.csv in the root directory."));
+
+        JPanel separatorPanel = new JPanel(new BorderLayout());
+        separatorPanel.setBorder(BorderFactory.createEmptyBorder(8, 15, 8, 15));
+        separatorPanel.add(new JSeparator(), BorderLayout.CENTER);
+
+        JPanel inputPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 15, 0));
+        inputPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 15, 15));
+        inputPanel.add(cleanGeneratedFilesCheckBox);
+
+        JPanel bodyPanel = new JPanel();
+        bodyPanel.setLayout(new BoxLayout(bodyPanel, BoxLayout.Y_AXIS));
+        bodyPanel.add(textPanel);
+        bodyPanel.add(separatorPanel);
+        bodyPanel.add(inputPanel);
+
         showMessage(bodyPanel, "WGA Mask");
-        return Map.of();
+        return Map.of(INPUT_CLEAN_GENERATED_FILES, cleanGeneratedFilesCheckBox.isSelected());
     }
 
     @Override

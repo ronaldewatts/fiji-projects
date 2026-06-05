@@ -23,11 +23,21 @@ All plugins extend `BasePlugin`, which implements the full UI flow via a templat
 1. `showStartupMessage()` — shows the startup dialog; returns a `Map<String, Object>` of user inputs (e.g. max
    brightness). Return `Map.of()` if no inputs are needed.
 2. Directory chooser prompts the user for the root directory to process.
-3. `buildResultsFile(inputs, rootDirectory)` — performs all image processing and returns the written CSV `File`.
-4. `showCompletionMessage(path)` — shows the completion dialog.
+3. If the inputs map has `INPUT_CLEAN_GENERATED_FILES` set to `true`, `cleanGeneratedFiles(rootDirectory)` deletes this
+   plugin's previously generated files before processing (see below).
+4. `buildResultsFile(inputs, rootDirectory)` — performs all image processing and returns the written CSV `File`.
+5. `showCompletionMessage(path)` — shows the completion dialog.
 
 `BasePlugin.getImageDirectories()` walks the root directory and returns all immediate and nested subdirectories (
 excluding the root itself).
+
+**Generated-file cleanup:** `BasePlugin` exposes the `INPUT_CLEAN_GENERATED_FILES` input key and an overridable
+`getGeneratedFilePatterns()` hook returning regexes matched against file names only (default empty = delete nothing).
+Each plugin adds a startup checkbox (checked by default) that sets `INPUT_CLEAN_GENERATED_FILES`, and overrides
+`getGeneratedFilePatterns()` to declare its output PNG suffixes and result-CSV prefix. When the box is checked,
+`cleanGeneratedFiles()` walks the root tree and deletes every regular file whose name matches a pattern, logging each
+deletion; `.tif` sources and non-matching files are never touched. There is no confirmation dialog — the checkbox is the
+only gate.
 
 ### `ResultsTableService` singleton
 
@@ -50,22 +60,21 @@ per-channel min/max thresholds; the negative control provides per-channel backgr
 
 ### WGA Mask / WGA Mask Alt Colors / Membrane — inline processing
 
-These three plugins follow the same structural pattern but differ in LUTs and thresholding algorithm for the mask
-channel:
+These three plugins follow the same structural pattern but differ in LUTs and thresholding algorithms:
 
-| Plugin              | CALR LUT        | Mask LUT   | Mask threshold |
-|---------------------|-----------------|------------|----------------|
-| WGA Mask            | Green Fire Blue | Yellow     | Intermodes     |
-| WGA Mask Alt Colors | Cyan Hot        | Orange Hot | Intermodes     |
-| Membrane            | Cyan Hot        | Orange Hot | IsoData dark   |
+| Plugin              | CALR LUT        | Mask LUT   | CALR threshold | Mask threshold |
+|---------------------|-----------------|------------|----------------|----------------|
+| WGA Mask            | Green Fire Blue | Yellow     | Huang dark     | Intermodes     |
+| WGA Mask Alt Colors | Cyan Hot        | Orange Hot | Huang dark     | Intermodes     |
+| Membrane            | Cyan Hot        | Orange Hot | IsoData dark   | IsoData dark   |
 
 Processing per image (applied to each 2-slice `.tif`):
 
 1. Rolling-ball background subtraction (radius 25) on the full stack.
 2. Slice 1 = CALR channel; Slice 2 = mask channel.
-3. **Total CALR**: Huang dark threshold on a duplicate of slice 1.
-4. **Masked CALR**: threshold the mask slice to create an ROI → apply ROI to a CALR duplicate → Huang dark threshold →
-   measure.
+3. **Total CALR**: the CALR threshold (see table) applied to a duplicate of slice 1.
+4. **Masked CALR**: the mask threshold (see table) applied to the mask slice to create an ROI → ROI transferred to the
+   thresholded CALR duplicate → measure.
 5. LUTs applied, calibration bar added to CALR, three PNGs saved (`_CALR_RBS25`, `_WGA_RBS25`/`_Membrane_RBS25`,
    `_MERGED_RBS25`).
 

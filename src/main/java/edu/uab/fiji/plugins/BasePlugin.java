@@ -17,9 +17,12 @@ import java.nio.file.Paths;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
 public abstract class BasePlugin implements Command {
+
+    public static final String INPUT_CLEAN_GENERATED_FILES = "cleanGeneratedFiles";
 
     @Override
     public void run() {
@@ -40,6 +43,10 @@ public abstract class BasePlugin implements Command {
         }
         String rootDirectory = od.getDirectory().substring(0, od.getDirectory().length() - 1); // Remove trailing /
         IJ.log("Running analysis of " + rootDirectory);
+
+        if (Boolean.TRUE.equals(inputs.get(INPUT_CLEAN_GENERATED_FILES))) {
+            cleanGeneratedFiles(rootDirectory);
+        }
 
         File resultFile = buildResultsFile(inputs, rootDirectory);
 
@@ -75,12 +82,43 @@ public abstract class BasePlugin implements Command {
         JOptionPane.showMessageDialog(null, panel, title, JOptionPane.PLAIN_MESSAGE);
     }
 
+    /**
+     * Regex patterns (matched against the file name only) identifying files this plugin generates and may safely
+     * delete before a run. Defaults to none; plugins that produce output should override this.
+     */
+    protected List<Pattern> getGeneratedFilePatterns() {
+        return List.of();
+    }
+
+    private void cleanGeneratedFiles(String rootDirectory) {
+        List<Pattern> patterns = getGeneratedFilePatterns();
+        if (patterns.isEmpty()) {
+            return;
+        }
+        try (Stream<Path> stream = Files.walk(Paths.get(rootDirectory))) {
+            stream
+                .filter(Files::isRegularFile)
+                .filter(path -> patterns.stream().anyMatch(pattern -> pattern.matcher(path.getFileName().toString()).matches()))
+                .forEach(path -> {
+                    try {
+                        Files.delete(path);
+                        IJ.log("Deleted generated file: " + path);
+                    } catch (IOException e) {
+                        IJ.log("Failed to delete generated file: " + path + " - " + e.getMessage());
+                    }
+                });
+        } catch (Exception e) {
+            IJ.log("Failed to clean generated files in: " + rootDirectory + " - " + e.getMessage());
+        }
+    }
+
     public List<String> getImageDirectories(String rootDirectory) {
         try (Stream<Path> stream = Files.walk(Paths.get(rootDirectory))) {
             return stream
                 .filter(Files::isDirectory)
                 .map(Path::toString)
                 .filter(path -> !path.equals(rootDirectory))
+                .sorted()
                 .toList();
         } catch (IOException e) {
             throw new RuntimeException("Failed to read directories from: " + rootDirectory, e);

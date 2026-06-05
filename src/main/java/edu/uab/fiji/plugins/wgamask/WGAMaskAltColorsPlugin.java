@@ -36,6 +36,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -235,8 +236,19 @@ public class WGAMaskAltColorsPlugin extends BasePlugin {
     }
 
     @Override
+    protected List<Pattern> getGeneratedFilePatterns() {
+        return List.of(
+            Pattern.compile(".*_CALR_RBS25\\.png"),
+            Pattern.compile(".*_WGA_RBS25\\.png"),
+            Pattern.compile(".*_MERGED_RBS25\\.png"),
+            Pattern.compile("WGAMaskAltColors_.*\\.csv")
+        );
+    }
+
+    @Override
     public Map<String, Object> showStartupMessage() {
         JTextField maximumBrightnessField = new JTextField(10);
+        JCheckBox cleanGeneratedFilesCheckBox = new JCheckBox("Delete previously generated files in this directory before running?", true);
 
         ((AbstractDocument) maximumBrightnessField.getDocument()).setDocumentFilter(new DocumentFilter() {
             @Override
@@ -269,21 +281,30 @@ public class WGAMaskAltColorsPlugin extends BasePlugin {
         separatorPanel.add(new JSeparator(), BorderLayout.CENTER);
 
         JPanel inputPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 15, 0));
-        inputPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 15, 15));
+        inputPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 15));
         inputPanel.add(new JLabel("Maximum Brightness: "));
         inputPanel.add(maximumBrightnessField);
+
+        JPanel checkBoxPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 15, 0));
+        checkBoxPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 15, 15));
+        checkBoxPanel.add(cleanGeneratedFilesCheckBox);
 
         JPanel bodyPanel = new JPanel();
         bodyPanel.setLayout(new BoxLayout(bodyPanel, BoxLayout.Y_AXIS));
         bodyPanel.add(textPanel);
         bodyPanel.add(separatorPanel);
         bodyPanel.add(inputPanel);
+        bodyPanel.add(checkBoxPanel);
 
         showMessage(bodyPanel, "WGA Mask Alt Colors");
 
+        Map<String, Object> result = new HashMap<>();
+        result.put(INPUT_CLEAN_GENERATED_FILES, cleanGeneratedFilesCheckBox.isSelected());
         String text = maximumBrightnessField.getText().trim();
-        if (text.isEmpty()) return Map.of();
-        return Map.of(INPUT_MAXIMUM_BRIGHTNESS, Double.parseDouble(text));
+        if (!text.isEmpty()) {
+            result.put(INPUT_MAXIMUM_BRIGHTNESS, Double.parseDouble(text));
+        }
+        return result;
     }
 
     @Override

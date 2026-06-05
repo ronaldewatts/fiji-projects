@@ -16,7 +16,7 @@ public record Measurement(String sex, String treatment, String mouseNumber, Stri
             "Min," +
             "Max," +
             "Integrated Density," +
-            "Integrated Density/Area," +
+            "Integrated Density/Area" +
             System.lineSeparator();
     }
 
@@ -31,7 +31,7 @@ public record Measurement(String sex, String treatment, String mouseNumber, Stri
             min + "," +
             max + "," +
             integratedDensity + "," +
-            new BigDecimal(integratedDensity).divide(new BigDecimal(area), 6, RoundingMode.HALF_UP) + "," +
+            new BigDecimal(integratedDensity).divide(new BigDecimal(area), 6, RoundingMode.HALF_UP) +
             System.lineSeparator();
     }
 }
