@@ -133,6 +133,7 @@ public class FluorescenceIntensityPlugin extends BasePlugin {
                             IJ.log("processing file: " + absolutePath);
                             Image image = new Image(absolutePath, positiveThresholdMap, negativeMeansMap);
                             measurements.addAll(image.measure());
+                            image.flush();
                             processedImages.add(absolutePath);
                         }
                     });

@@ -126,8 +126,15 @@ public class MembranePlugin extends BasePlugin {
                                     IJ.saveAs(slice2, "PNG", path.getParent().toAbsolutePath() + "/" + imageNumber + "_Membrane_RBS25.png");
                                     IJ.saveAs(composite, "PNG", path.getParent().toAbsolutePath() + "/" + imageNumber + "_MERGED_RBS25.png");
 
+                                    // Release pixel buffers promptly to keep peak heap bounded across large batches.
+                                    image.flush();
+                                    slice1.flush();
+                                    slice2.flush();
+                                    slice1Duplicate.flush();
+                                    composite.flush();
                                 } else {
                                     IJ.log(absolutePath + " is not a valid image file as it has a stack size of " + image.getStackSize());
+                                    image.flush();
                                 }
                             }
                         });
@@ -203,11 +210,6 @@ public class MembranePlugin extends BasePlugin {
             slices.add(sliceImage);
         }
         // Reset the original stack state.
-        image.setSlice(currentSlice);
-        if (image.isProcessor()) {
-            ImageProcessor ip = image.getProcessor();
-            ip.setPixels(ip.getPixels());
-        }
         image.setSlice(currentSlice);
 
         return slices;

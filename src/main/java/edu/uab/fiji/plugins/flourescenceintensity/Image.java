@@ -58,6 +58,13 @@ public class Image {
                 }
             }
         }
+
+        // The source image is no longer needed once channels are split out; release its pixels.
+        image.flush();
+    }
+
+    public void flush() {
+        imageChannels.forEach(imageChannel -> imageChannel.imagePlus().flush());
     }
 
     public Map<ChannelType, Threshold> getThresholds() {
