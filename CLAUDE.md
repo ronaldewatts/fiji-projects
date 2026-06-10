@@ -85,6 +85,19 @@ mouse number, stain, and image number into the `Measurement` record.
 WGA Mask Alt Colors and Membrane accept an optional **Maximum Brightness** integer at startup; when provided it sets
 `slice1.setDisplayRange(0, value)` before saving the CALR PNG.
 
+**Membrane-only deviations** (the other two plugins do neither):
+
+- **Root-directory processing.** Membrane prepends `rootDirectory` itself to the list returned by `getImageDirectories()`,
+  so `.tif`s placed directly in the chosen directory (no subdirectories) are processed. Because the per-directory
+  `Files.walk` recurses, merging and processing are split into two passes — merge across *all* directories first, then
+  process — so the recursive root walk never reads a stale or not-yet-created merged file. A `processedImages` set
+  dedupes paths that the root walk and a subdirectory walk both reach.
+- **Channel-file merging.** Before processing each directory, `mergeChannelImages()` scans for per-channel source files
+  matching `CHANNEL_FILE` (`{name}--C0{n}.tif`) and RGB-merges each group via `RGBStackMerge.mergeChannels` — `C00`→red,
+  `C01`→green, `C02`→blue — into a composite saved (overwriting) as `{name}.tif`. The resulting 3-channel composite feeds
+  the normal slice-1/slice-2 path (red=CALR, green=membrane; blue retained but unmeasured). The `--C0*.tif` sources stay
+  on disk but are filtered out of the processing walk by the same pattern.
+
 ### Shared `Measurement` record duplication
 
 `wgamask.Measurement` and `membrane.Measurement` are structurally identical records. They are kept separate so each

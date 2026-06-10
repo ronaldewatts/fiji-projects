@@ -89,10 +89,24 @@ visualization across datasets with varying intensity scales.
 ### Membrane
 
 Quantifies CALR signal both in total cells and restricted to the cell membrane
-region across all `.tif` images in the subdirectories of a chosen root
-directory. Each `.tif` must be a two-slice stack where slice 1 is the CALR
-channel and slice 2 is the membrane marker channel. Rolling-ball background
-subtraction (radius 25) is applied before analysis.
+region across all `.tif` images in the chosen root directory and its
+subdirectories. Images may live directly in the chosen directory (no
+subdirectories required) or be organized into subdirectories. Each `.tif` must
+be a two-slice stack where slice 1 is the CALR channel and slice 2 is the
+membrane marker channel. Rolling-ball background subtraction (radius 25) is
+applied before analysis.
+
+**Channel-file merging:** before processing, each subdirectory is scanned for
+per-channel source files named `{image-name}--C0*.tif` (e.g. `A--C00.tif`,
+`A--C01.tif`, `A--C02.tif`). When found, each group is RGB-merged — `C00` →
+red, `C01` → green, `C02` → blue — into a composite saved as `{image-name}.tif`,
+overwriting any existing file of that name. The merged file then flows through
+the normal analysis using slice 1 (red / `C00`) as the CALR channel and slice 2
+(green / `C01`) as the membrane channel; the blue (`C02`) channel is retained in
+the image but not measured. The original `--C0*.tif` files are left in place but
+skipped by the per-image processing loop, so they are never analyzed directly.
+If a subdirectory contains no `--C0*.tif` files, this step is skipped and
+processing continues normally.
 
 The plugin produces two measurements per image:
 

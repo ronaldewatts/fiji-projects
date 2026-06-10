@@ -41,6 +41,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
@@ -51,6 +53,9 @@ public class MembranePlugin extends BasePlugin {
 
     private static final Pattern DIGITS = Pattern.compile("\\d+");
 
+    // Matches per-channel source files like "A--C00.tif"; group 1 = image name, group 2 = channel index (00=red, 01=green, 02=blue).
+    private static final Pattern CHANNEL_FILE = Pattern.compile("(.+)--C0(\\d+)\\.tif");
+
     public static void main(String[] args) {
         System.setProperty("ide", "true");
 
@@ -60,7 +65,11 @@ public class MembranePlugin extends BasePlugin {
 
     @Override
     public File buildResultsFile(Map<String, Object> inputs, String rootDirectory) {
-        List<String> imageDirectories = getImageDirectories(rootDirectory);
+        // Include the root directory itself so images placed directly in the chosen directory (no subdirectories) are
+        // still processed. Already-processed paths are deduplicated below, so overlap with subdirectories is harmless.
+        List<String> imageDirectories = new ArrayList<>();
+        imageDirectories.add(rootDirectory);
+        imageDirectories.addAll(getImageDirectories(rootDirectory));
         Set<String> processedImages = new HashSet<>();
         List<Measurement> measurements = new ArrayList<>();
         Double maximumBrightness = (Double) inputs.get(INPUT_MAXIMUM_BRIGHTNESS);
@@ -77,11 +86,20 @@ public class MembranePlugin extends BasePlugin {
                 throw new RuntimeException(e);
             }
 
+            // First pass: merge any per-channel source files into composite .tif files across every directory. This must
+            // complete before processing begins, because the processing walk of the root directory recurses into
+            // subdirectories and would otherwise read stale (or not-yet-created) merged files.
+            for (String subDir : imageDirectories) {
+                mergeChannelImages(subDir);
+            }
+
+            // Second pass: process the composite images.
             for (String subDir : imageDirectories) {
                 try (Stream<Path> stream = Files.walk(Paths.get(subDir))) {
                     stream
                         .sorted(Comparator.comparing(path -> path.getFileName().toString()))
                         .filter(path -> path.toString().endsWith(".tif"))
+                        .filter(path -> !CHANNEL_FILE.matcher(path.getFileName().toString()).matches())
                         .forEach(path -> {
                             String absolutePath = path.toAbsolutePath().toString();
                             if (!processedImages.contains(absolutePath)) {
@@ -152,6 +170,57 @@ public class MembranePlugin extends BasePlugin {
             measurements.sort(comparator);
 
             return writeResultsFile(rootDirectory, measurements);
+        }
+    }
+
+    /**
+     * Scans {@code subDir} for per-channel source files named {@code {image-name}--C0*.tif}, RGB-merges each group
+     * (00=red, 01=green, 02=blue) into a composite saved as {@code {image-name}.tif} (overwriting any existing file),
+     * and leaves the original channel files in place. If no channel files are present, this is a no-op.
+     */
+    private void mergeChannelImages(String subDir) {
+        File directory = new File(subDir);
+        File[] channelFiles = directory.listFiles((dir, name) -> CHANNEL_FILE.matcher(name).matches());
+        if (channelFiles == null || channelFiles.length == 0) {
+            return;
+        }
+
+        // Group channel files by image name, keyed by channel index so they can be ordered red/green/blue.
+        Map<String, Map<Integer, File>> imageGroups = new TreeMap<>();
+        for (File channelFile : channelFiles) {
+            Matcher matcher = CHANNEL_FILE.matcher(channelFile.getName());
+            if (matcher.matches()) {
+                String imageName = matcher.group(1);
+                int channelIndex = Integer.parseInt(matcher.group(2));
+                imageGroups.computeIfAbsent(imageName, key -> new TreeMap<>()).put(channelIndex, channelFile);
+            }
+        }
+
+        for (Map.Entry<String, Map<Integer, File>> group : imageGroups.entrySet()) {
+            String imageName = group.getKey();
+            Map<Integer, File> channels = group.getValue();
+            IJ.log("merging channel images for: " + imageName);
+
+            // RGBStackMerge expects images ordered by color: [0]=red, [1]=green, [2]=blue. Place each channel by its index.
+            ImagePlus[] channelImages = new ImagePlus[3];
+            for (Map.Entry<Integer, File> channel : channels.entrySet()) {
+                int channelIndex = channel.getKey();
+                if (channelIndex >= 0 && channelIndex < channelImages.length) {
+                    channelImages[channelIndex] = IJ.openImage(channel.getValue().getAbsolutePath());
+                } else {
+                    IJ.log("ignoring unexpected channel index " + channelIndex + " for image " + imageName);
+                }
+            }
+
+            ImagePlus merged = RGBStackMerge.mergeChannels(channelImages, true);
+            IJ.saveAs(merged, "Tiff", new File(directory, imageName + ".tif").getAbsolutePath());
+
+            merged.flush();
+            for (ImagePlus channelImage : channelImages) {
+                if (channelImage != null) {
+                    channelImage.flush();
+                }
+            }
         }
     }
 
@@ -266,9 +335,10 @@ public class MembranePlugin extends BasePlugin {
             }
         });
 
-        JPanel textPanel = new JPanel(new GridLayout(5, 1));
+        JPanel textPanel = new JPanel(new GridLayout(6, 1));
         textPanel.setBorder(BorderFactory.createEmptyBorder(15, 15, 0, 15));
         textPanel.add(new JLabel("This plugin analyzes all images in the subdirectories of the directory chosen using Cyan Hot and Orange Hot LUTs."));
+        textPanel.add(new JLabel("Any '{name}--C00/C01/C02.tif' channel files are first RGB-merged (00=red, 01=green, 02=blue) into '{name}.tif'."));
         textPanel.add(new JLabel("You must ensure that the .tif files contain exactly 2 slices."));
         textPanel.add(new JLabel("Image directories are expected to be in the name format '{Sex} {Treatment} {Mouse #}' as this is included in the results."));
         textPanel.add(new JLabel("Along with results, MERGED, CALR and Membrane .png images will be created for each image in the image directory."));
