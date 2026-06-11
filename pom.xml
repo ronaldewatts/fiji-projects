@@ -42,5 +42,13 @@
             <artifactId>imglib2-ij</artifactId>
             <version>2.0.3</version>
         </dependency>
+        <!-- Provided by Fiji at runtime (not bundled). Needed only to compile the LegacyPostRefreshMenus hook that
+             inserts the UAB-menu separator before Help; version matches the imagej-legacy jar Fiji ships. -->
+        <dependency>
+            <groupId>net.imagej</groupId>
+            <artifactId>imagej-legacy</artifactId>
+            <version>2.0.3</version>
+            <scope>provided</scope>
+        </dependency>
     </dependencies>
 </project>

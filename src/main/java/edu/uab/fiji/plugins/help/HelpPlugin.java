@@ -36,8 +36,8 @@ import java.util.stream.Stream;
  * annotation index (which the Maven CLI does not generate and which can be classloader-sensitive), so Help works
  * regardless of how the jar was built.</p>
  */
-// A high leaf weight sorts Help last within the UAB menu; SciJava auto-inserts a separator before it because its
-// weight differs from the other items (weight 1) by more than 1.
+// A high leaf weight sorts Help last within the UAB menu. The separator above it is NOT weight-driven: Fiji's legacy
+// menu bridge ignores weight-difference separators, so it is inserted at runtime by UABMenuSeparator.
 @Plugin(type = Command.class, name = "Help",
     menu = {@Menu(label = "UAB"), @Menu(label = "Help", weight = 1000d)})
 public class HelpPlugin implements Command {

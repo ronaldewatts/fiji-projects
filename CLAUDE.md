@@ -91,10 +91,20 @@ scan works regardless of how the jar was built. (This means the plugins' no-arg 
 
 **Menu placement.** UAB plugins declare their menu via the `@Menu` array form (not the `menuPath` string), because the
 string form leaves every leaf at the default weight (`+Infinity`) and gives no ordering control. SciJava sorts menu
-items by leaf `weight` ascending (ties alphabetical) and auto-inserts a separator wherever consecutive weights differ by
-more than 1. The five processing plugins use `@Menu(label = "…", weight = 1d)` (equal weight → alphabetical, no
-separators between them); `HelpPlugin` uses `weight = 1000d` so it sorts to the bottom with a separator above it. To add
+items by leaf `weight` ascending (ties alphabetical). The five processing plugins use `@Menu(label = "…", weight = 1d)`
+(equal weight → alphabetical); `HelpPlugin` uses `weight = 1000d` so it sorts to the bottom of the UAB menu. To add
 another normal plugin, give it `weight = 1d`; only Help carries the high weight.
+
+**Menu separator (legacy menu).** SciJava's *own* Swing/AWT menu UI (`AbstractMenuCreator`) auto-inserts a separator
+wherever consecutive leaf weights differ by more than 1 — but Fiji does **not** use that UI. Fiji runs the legacy
+ImageJ 1.x menu bar, and `net.imagej.legacy.IJ1Helper$IJ1MenuWrapper` bridges our `@Plugin` commands into it. That
+bridge honors weight only for *ordering*; for separators it inserts at most one divider per menu, solely at the boundary
+between built-in IJ1 items and bridge-injected items, and only when the menu already had items. The UAB menu is entirely
+bridge-injected, so it never qualifies — **weight differences produce no separator there.** To get the rule above Help we
+register `UABMenuSeparator` as a `@Plugin(type = LegacyPostRefreshMenus.class)`; Fiji calls its `run()` after the menu
+bar is (re)built (startup and every refresh), and it inserts an AWT separator above the `Help` item idempotently. This
+needs `imagej-legacy` at compile time, added to `pom.xml` with `provided` scope (Fiji supplies it at runtime; it is not
+bundled). Do not re-add a weight-based separator claim — it silently does nothing in Fiji.
 
 **Generated-file cleanup:** `BasePlugin` exposes the `INPUT_CLEAN_GENERATED_FILES` input key and an overridable
 `getGeneratedFilePatterns()` hook returning regexes matched against file names only (default empty = delete nothing).
