@@ -144,6 +144,7 @@ public class FluorescenceIntensityPlugin extends BasePlugin implements Describab
         for (String subDir : imageDirectories) {
             try (Stream<Path> stream = Files.walk(Paths.get(subDir))) {
                 stream.filter(path -> path.toString().endsWith(".tif"))
+                    .filter(path -> !path.getFileName().toString().startsWith("."))
                     .forEach(path -> {
                         String absolutePath = path.toAbsolutePath().toString();
                         if (!processedImages.contains(absolutePath)) {

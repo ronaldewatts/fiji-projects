@@ -85,6 +85,7 @@ public class WGAMaskAltColorsPlugin extends BasePlugin implements DescribablePlu
                     stream
                         .sorted(Comparator.comparing(path -> path.getFileName().toString()))
                         .filter(path -> path.toString().endsWith(".tif"))
+                        .filter(path -> !path.getFileName().toString().startsWith("."))
                         .forEach(path -> {
                             String absolutePath = path.toAbsolutePath().toString();
                             if (!processedImages.contains(absolutePath)) {

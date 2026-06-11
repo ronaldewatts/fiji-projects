@@ -57,7 +57,7 @@ public class ImageMergerPlugin extends BasePlugin implements DescribablePlugin {
      */
     private void mergeChannelImages(String subDir) {
         File directory = new File(subDir);
-        File[] channelFiles = directory.listFiles((dir, name) -> CHANNEL_FILE.matcher(name).matches());
+        File[] channelFiles = directory.listFiles((dir, name) -> !name.startsWith(".") && CHANNEL_FILE.matcher(name).matches());
         if (channelFiles == null || channelFiles.length == 0) {
             return;
         }
@@ -76,7 +76,8 @@ public class ImageMergerPlugin extends BasePlugin implements DescribablePlugin {
         for (Map.Entry<String, Map<Integer, File>> group : imageGroups.entrySet()) {
             String imageName = group.getKey();
             Map<Integer, File> channels = group.getValue();
-            IJ.log("merging channel images for: " + imageName);
+            String mergedPath = new File(directory, imageName + ".tif").getAbsolutePath();
+            IJ.log("merging channel images for: " + mergedPath);
 
             // RGBStackMerge expects images ordered by color: [0]=red, [1]=green, [2]=blue. Place each channel by its index.
             ImagePlus[] channelImages = new ImagePlus[3];
@@ -90,7 +91,7 @@ public class ImageMergerPlugin extends BasePlugin implements DescribablePlugin {
             }
 
             ImagePlus merged = RGBStackMerge.mergeChannels(channelImages, true);
-            IJ.saveAs(merged, "Tiff", new File(directory, imageName + ".tif").getAbsolutePath());
+            IJ.saveAs(merged, "Tiff", mergedPath);
 
             merged.flush();
             for (ImagePlus channelImage : channelImages) {
