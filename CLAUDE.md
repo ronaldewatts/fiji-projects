@@ -107,16 +107,23 @@ wherever consecutive leaf weights differ by more than 1 — but Fiji does **not*
 ImageJ 1.x menu bar, and `net.imagej.legacy.IJ1Helper$IJ1MenuWrapper` bridges our `@Plugin` commands into it. That
 bridge honors weight only for *ordering*; for separators it inserts at most one divider per menu, solely at the boundary
 between built-in IJ1 items and bridge-injected items, and only when the menu already had items. The UAB menu is entirely
-bridge-injected, so it never qualifies — **weight differences produce no separator there.** To get the rule above Help we
-register `UABMenuSeparator` as a `@Plugin(type = LegacyPostRefreshMenus.class)`; Fiji calls its `run()` when the menu
-bar is (re)built, and it inserts an AWT separator above the `Help` item idempotently. The UAB items themselves are
-bridged in by `IJ1Helper.addMenuItems()`, which is *separate* from the menu refresh that fires this hook and is not
-guaranteed to run first — so on startup `Help` often does not exist yet when `run()` first fires. The hook therefore
-**polls on the EDT** (a `javax.swing.Timer`, ~250 ms cadence, bounded attempts) until the `Help` leaf appears, inserts
-the separator, then stops; the idempotency check (skip if the preceding item is already a `-` separator) keeps repeated
-refreshes from stacking dividers. This needs `imagej-legacy` at compile time, added to `pom.xml` with `provided` scope
-(Fiji supplies it at runtime; it is not bundled). Do not re-add a weight-based separator claim — it silently does
-nothing in Fiji, and do not assume the menu-refresh hook runs after the UAB items are added.
+bridge-injected, so it never qualifies — **weight differences produce no separator there.** To get the rule above Help
+we insert it ourselves in `UABMenuSeparator`, which fires from **two** triggers because neither is reliable alone:
+
+- `@Plugin(type = LegacyPostRefreshMenus.class)` → `run()`, called when the legacy menu bar is (re)built. On a clean
+  launch the menus are often built before this path runs, so it **does not fire at startup** (it does fire on later
+  rebuilds, e.g. after the Updater). This needs `imagej-legacy` at compile time, added to `pom.xml` with `provided`
+  scope (Fiji supplies it at runtime; not bundled).
+- `@EventHandler void onUIShown(UIShownEvent)` — fired when the UI window/menu bar is shown. SciJava auto-subscribes
+  `@EventHandler` methods on the plugin instances it creates (the `LegacyPostRefreshMenus` instance here), so **this is
+  the trigger that actually works at startup.** This is what fixed the separator; don't remove it thinking the refresh
+  hook alone suffices.
+
+The UAB items themselves are bridged in by `IJ1Helper.addMenuItems()`, separate from both triggers, so `Help` may not
+exist yet when a trigger fires. Each trigger therefore kicks a shared EDT poll (`javax.swing.Timer`, ~250 ms, bounded;
+one at a time via an `AtomicBoolean`) that retries until the `Help` leaf appears, inserts the separator, then stops; the
+idempotency check (skip if the preceding item is already a `-` separator) keeps repeated triggers from stacking
+dividers. Do not re-add a weight-based separator claim — it silently does nothing in Fiji.
 
 **Generated-file cleanup:** `BasePlugin` exposes the `INPUT_CLEAN_GENERATED_FILES` input key and an overridable
 `getGeneratedFilePatterns()` hook returning regexes matched against file names only (default empty = delete nothing).
