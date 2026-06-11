@@ -1,6 +1,7 @@
 package edu.uab.fiji.plugins.wgamask;
 
 import edu.uab.fiji.plugins.BasePlugin;
+import edu.uab.fiji.plugins.DescribablePlugin;
 import edu.uab.fiji.service.ResultsTableService;
 import ij.IJ;
 import ij.ImagePlus;
@@ -14,6 +15,7 @@ import net.imagej.lut.LUTService;
 import net.imglib2.display.ColorTable8;
 import org.scijava.Context;
 import org.scijava.command.Command;
+import org.scijava.plugin.Menu;
 import org.scijava.plugin.Plugin;
 
 import javax.swing.*;
@@ -39,8 +41,9 @@ import java.util.Set;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
-@Plugin(name = "WGA Mask", type = Command.class, headless = true, menuPath = "UAB>WGA Mask")
-public class WGAMaskPlugin extends BasePlugin {
+@Plugin(name = "WGA Mask", type = Command.class, headless = true,
+    menu = {@Menu(label = "UAB"), @Menu(label = "WGA Mask", weight = 1d)})
+public class WGAMaskPlugin extends BasePlugin implements DescribablePlugin {
 
     public static void main(String[] args) {
         System.setProperty("ide", "true");
@@ -235,16 +238,31 @@ public class WGAMaskPlugin extends BasePlugin {
     }
 
     @Override
+    public String getPluginName() {
+        return "WGA Mask";
+    }
+
+    @Override
+    public String getDescription() {
+        return """
+            <p>Quantifies CALR (calreticulin) signal both in full cells and within the WGA-defined cell membrane region across all <code>.tif</code> images in the subdirectories of a chosen root directory.</p>
+            <p>Each <code>.tif</code> must be a two-slice stack where slice 1 is the CALR channel and slice 2 is the WGA channel. Rolling-ball background subtraction (radius 25) is applied to the full stack before analysis.</p>
+            <p>Two measurements are produced per image:</p>
+            <ul>
+              <li><b>Total CALR</b> — Huang dark auto-threshold applied to the CALR slice</li>
+              <li><b>WGA-mask CALR</b> — Intermodes threshold on the WGA slice creates an ROI, transferred to the CALR slice before Huang dark thresholding</li>
+            </ul>
+            <p>CALR images are rendered with the <b>Green Fire Blue</b> LUT and WGA images with the <b>Yellow</b> LUT. Image directories must be named <code>{Sex} {Treatment} {Mouse #}</code> as these fields are parsed into the results.</p>
+            <p><b>Output:</b> <code>WGAMask_{RootDirectory}_{Timestamp}.csv</code> in the root directory, plus <code>{ImageNumber}_CALR_RBS25.png</code>, <code>_WGA_RBS25.png</code> and <code>_MERGED_RBS25.png</code> alongside each source image.</p>""";
+    }
+
+    @Override
     public Map<String, Object> showStartupMessage() {
         JCheckBox cleanGeneratedFilesCheckBox = new JCheckBox("Delete previously generated files in this directory before running?", true);
 
-        JPanel textPanel = new JPanel(new GridLayout(5, 1));
+        JPanel textPanel = new JPanel(new BorderLayout());
         textPanel.setBorder(BorderFactory.createEmptyBorder(15, 15, 0, 15));
-        textPanel.add(new JLabel("This plugin analyzes all images in the subdirectories of the directory chosen using Green Fire Blue and Yellow LUTs."));
-        textPanel.add(new JLabel("You must ensure that the .tif files contain exactly 2 slices."));
-        textPanel.add(new JLabel("Image directories are expected to be in the name format '{Sex} {Treatment} {Mouse #}' as this is included in the results."));
-        textPanel.add(new JLabel("Along with results, MERGED, CALR and WGA .png images will be created for each image in the image directory."));
-        textPanel.add(new JLabel("Results will be created as a CSV file called WGAMask_{Root Directory}_{Timestamp}.csv in the root directory."));
+        textPanel.add(new JLabel(DescribablePlugin.toSplashHtml(getDescription())));
 
         JPanel separatorPanel = new JPanel(new BorderLayout());
         separatorPanel.setBorder(BorderFactory.createEmptyBorder(8, 15, 8, 15));

@@ -1,6 +1,7 @@
 package edu.uab.fiji.plugins.wgamask;
 
 import edu.uab.fiji.plugins.BasePlugin;
+import edu.uab.fiji.plugins.DescribablePlugin;
 import edu.uab.fiji.service.ResultsTableService;
 import ij.IJ;
 import ij.ImagePlus;
@@ -14,6 +15,7 @@ import net.imagej.lut.LUTService;
 import net.imglib2.display.ColorTable8;
 import org.scijava.Context;
 import org.scijava.command.Command;
+import org.scijava.plugin.Menu;
 import org.scijava.plugin.Plugin;
 
 import javax.swing.*;
@@ -44,10 +46,11 @@ import java.util.Set;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
-@Plugin(name = "WGA Mask Alt Colors", type = Command.class, headless = true, menuPath = "UAB>WGA Mask Alt Colors")
-public class WGAMaskAltColorsPlugin extends BasePlugin {
+@Plugin(name = "WGA Mask Alt Colors", type = Command.class, headless = true,
+    menu = {@Menu(label = "UAB"), @Menu(label = "WGA Mask Alt Colors", weight = 1d)})
+public class WGAMaskAltColorsPlugin extends BasePlugin implements DescribablePlugin {
 
-    public static final String INPUT_MAXIMUM_BRIGHTNESS = "maximumBrightness";
+    public static final String INPUT_CALR_MAXIMUM_BRIGHTNESS = "calrMaximumBrightness";
 
     private static final Pattern DIGITS = Pattern.compile("\\d+");
 
@@ -63,7 +66,7 @@ public class WGAMaskAltColorsPlugin extends BasePlugin {
         List<String> imageDirectories = getImageDirectories(rootDirectory);
         Set<String> processedImages = new HashSet<>();
         List<Measurement> measurements = new ArrayList<>();
-        Double maximumBrightness = (Double) inputs.get(INPUT_MAXIMUM_BRIGHTNESS);
+        Double calrMaximumBrightness = (Double) inputs.get(INPUT_CALR_MAXIMUM_BRIGHTNESS);
 
         try (Context context = new Context()) {
             LUTService lutService = context.getService(LUTService.class);
@@ -121,8 +124,8 @@ public class WGAMaskAltColorsPlugin extends BasePlugin {
                                     slice2.setLut(new LUT(orangeHot.getValues()[0], orangeHot.getValues()[1], orangeHot.getValues()[2]));
                                     ImagePlus composite = RGBStackMerge.mergeChannels(new ImagePlus[]{slice1, slice2}, true);
 
-                                    if (maximumBrightness != null) {
-                                        slice1.setDisplayRange(0, maximumBrightness);
+                                    if (calrMaximumBrightness != null) {
+                                        slice1.setDisplayRange(0, calrMaximumBrightness);
                                     }
 
                                     IJ.run(slice1, "Calibration Bar...", "location=[Upper Right] fill=White label=Black number=2 decimal=0 font=12 zoom=3 overlay");
@@ -249,11 +252,25 @@ public class WGAMaskAltColorsPlugin extends BasePlugin {
     }
 
     @Override
+    public String getPluginName() {
+        return "WGA Mask Alt Colors";
+    }
+
+    @Override
+    public String getDescription() {
+        return """
+            <p>Identical in analysis to <b>WGA Mask</b> — same two-slice stack requirement, same rolling-ball background subtraction, same Huang dark / WGA Intermodes thresholding logic.</p>
+            <p>Renders images with the <b>Cyan Hot</b> LUT for CALR and the <b>Orange Hot</b> LUT for WGA.</p>
+            <p>Accepts an optional <b>CALR Maximum Brightness</b> input that sets the CALR display-range ceiling before saving PNGs, helping normalize visualization across datasets with varying intensity scales. Image directories must be named <code>{Sex} {Treatment} {Mouse #}</code> as these fields are parsed into the results.</p>
+            <p><b>Output:</b> <code>WGAMaskAltColors_{RootDirectory}_{Timestamp}.csv</code> in the root directory, plus <code>{ImageNumber}_CALR_RBS25.png</code>, <code>_WGA_RBS25.png</code> and <code>_MERGED_RBS25.png</code> alongside each source image.</p>""";
+    }
+
+    @Override
     public Map<String, Object> showStartupMessage() {
-        JTextField maximumBrightnessField = new JTextField(10);
+        JTextField calrMaximumBrightnessField = new JTextField(10);
         JCheckBox cleanGeneratedFilesCheckBox = new JCheckBox("Delete previously generated files in this directory before running?", true);
 
-        ((AbstractDocument) maximumBrightnessField.getDocument()).setDocumentFilter(new DocumentFilter() {
+        ((AbstractDocument) calrMaximumBrightnessField.getDocument()).setDocumentFilter(new DocumentFilter() {
             @Override
             public void insertString(FilterBypass fb, int offset, String string, AttributeSet attr)
                 throws BadLocationException {
@@ -271,13 +288,9 @@ public class WGAMaskAltColorsPlugin extends BasePlugin {
             }
         });
 
-        JPanel textPanel = new JPanel(new GridLayout(5, 1));
+        JPanel textPanel = new JPanel(new BorderLayout());
         textPanel.setBorder(BorderFactory.createEmptyBorder(15, 15, 0, 15));
-        textPanel.add(new JLabel("This plugin analyzes all images in the subdirectories of the directory chosen using Cyan Hot and Orange Hot LUTs."));
-        textPanel.add(new JLabel("You must ensure that the .tif files contain exactly 2 slices."));
-        textPanel.add(new JLabel("Image directories are expected to be in the name format '{Sex} {Treatment} {Mouse #}' as this is included in the results."));
-        textPanel.add(new JLabel("Along with results, MERGED, CALR and WGA .png images will be created for each image in the image directory."));
-        textPanel.add(new JLabel("Results will be created as a CSV file called WGAMaskAltColors_{Root Directory}_{Timestamp}.csv in the root directory."));
+        textPanel.add(new JLabel(DescribablePlugin.toSplashHtml(getDescription())));
 
         JPanel separatorPanel = new JPanel(new BorderLayout());
         separatorPanel.setBorder(BorderFactory.createEmptyBorder(8, 15, 8, 15));
@@ -285,8 +298,8 @@ public class WGAMaskAltColorsPlugin extends BasePlugin {
 
         JPanel inputPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 15, 0));
         inputPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 15));
-        inputPanel.add(new JLabel("Maximum Brightness: "));
-        inputPanel.add(maximumBrightnessField);
+        inputPanel.add(new JLabel("CALR Maximum Brightness: "));
+        inputPanel.add(calrMaximumBrightnessField);
 
         JPanel checkBoxPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 15, 0));
         checkBoxPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 15, 15));
@@ -303,9 +316,9 @@ public class WGAMaskAltColorsPlugin extends BasePlugin {
 
         Map<String, Object> result = new HashMap<>();
         result.put(INPUT_CLEAN_GENERATED_FILES, cleanGeneratedFilesCheckBox.isSelected());
-        String text = maximumBrightnessField.getText().trim();
+        String text = calrMaximumBrightnessField.getText().trim();
         if (!text.isEmpty()) {
-            result.put(INPUT_MAXIMUM_BRIGHTNESS, Double.parseDouble(text));
+            result.put(INPUT_CALR_MAXIMUM_BRIGHTNESS, Double.parseDouble(text));
         }
         return result;
     }

@@ -1,6 +1,7 @@
 package edu.uab.fiji.plugins.membrane;
 
 import edu.uab.fiji.plugins.BasePlugin;
+import edu.uab.fiji.plugins.DescribablePlugin;
 import edu.uab.fiji.service.ResultsTableService;
 import ij.IJ;
 import ij.ImagePlus;
@@ -14,6 +15,7 @@ import net.imagej.lut.LUTService;
 import net.imglib2.display.ColorTable8;
 import org.scijava.Context;
 import org.scijava.command.Command;
+import org.scijava.plugin.Menu;
 import org.scijava.plugin.Plugin;
 
 import javax.swing.*;
@@ -46,10 +48,11 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
-@Plugin(name = "Membrane", type = Command.class, headless = true, menuPath = "UAB>Membrane")
-public class MembranePlugin extends BasePlugin {
+@Plugin(name = "Membrane", type = Command.class, headless = true,
+    menu = {@Menu(label = "UAB"), @Menu(label = "Membrane", weight = 1d)})
+public class MembranePlugin extends BasePlugin implements DescribablePlugin {
 
-    public static final String INPUT_MAXIMUM_BRIGHTNESS = "maximumBrightness";
+    public static final String INPUT_CALR_MAXIMUM_BRIGHTNESS = "calrMaximumBrightness";
 
     private static final Pattern DIGITS = Pattern.compile("\\d+");
 
@@ -72,7 +75,7 @@ public class MembranePlugin extends BasePlugin {
         imageDirectories.addAll(getImageDirectories(rootDirectory));
         Set<String> processedImages = new HashSet<>();
         List<Measurement> measurements = new ArrayList<>();
-        Double maximumBrightness = (Double) inputs.get(INPUT_MAXIMUM_BRIGHTNESS);
+        Double calrMaximumBrightness = (Double) inputs.get(INPUT_CALR_MAXIMUM_BRIGHTNESS);
 
         try (Context context = new Context()) {
             LUTService lutService = context.getService(LUTService.class);
@@ -132,8 +135,8 @@ public class MembranePlugin extends BasePlugin {
                                     slice2.setLut(new LUT(orangeHot.getValues()[0], orangeHot.getValues()[1], orangeHot.getValues()[2]));
                                     ImagePlus composite = RGBStackMerge.mergeChannels(new ImagePlus[]{slice1, slice2}, true);
 
-                                    if (maximumBrightness != null) {
-                                        slice1.setDisplayRange(0, maximumBrightness);
+                                    if (calrMaximumBrightness != null) {
+                                        slice1.setDisplayRange(0, calrMaximumBrightness);
                                     }
 
                                     slice2.deleteRoi();
@@ -313,11 +316,31 @@ public class MembranePlugin extends BasePlugin {
     }
 
     @Override
+    public String getPluginName() {
+        return "Membrane";
+    }
+
+    @Override
+    public String getDescription() {
+        return """
+            <p>Quantifies CALR signal both in total cells and restricted to the cell membrane region across all <code>.tif</code> images in the chosen root directory and its subdirectories. Images may live directly in the chosen directory (no subdirectories required) or be organized into subdirectories.</p>
+            <p>Each <code>.tif</code> must be a two-slice stack where slice 1 is the CALR channel and slice 2 is the membrane marker channel. Rolling-ball background subtraction (radius 25) is applied before analysis.</p>
+            <p><b>Channel-file merging:</b> any <code>{name}--C00/C01/C02.tif</code> source files are first RGB-merged (00=red, 01=green, 02=blue) into <code>{name}.tif</code>; slice 1 (red) is the CALR channel and slice 2 (green) the membrane channel, while blue (C02) is retained but not measured.</p>
+            <p>Two measurements are produced per image:</p>
+            <ul>
+              <li><b>Total CALR</b> — IsoData dark auto-threshold applied to the CALR slice</li>
+              <li><b>Membrane CALR</b> — IsoData dark on the membrane slice creates an ROI, transferred to the CALR slice for measurement</li>
+            </ul>
+            <p>Images are rendered with the <b>Cyan Hot</b> LUT for CALR and <b>Orange Hot</b> for the membrane channel. An optional <b>CALR Maximum Brightness</b> caps the CALR display range; the membrane channel display range is auto-adjusted. Image directories must be named <code>{Sex} {Treatment} {Mouse #}</code>.</p>
+            <p><b>Output:</b> <code>Membrane_{RootDirectory}_{Timestamp}.csv</code> in the root directory, plus <code>{ImageNumber}_CALR_RBS25.png</code>, <code>_Membrane_RBS25.png</code> and <code>_MERGED_RBS25.png</code> alongside each source image.</p>""";
+    }
+
+    @Override
     public Map<String, Object> showStartupMessage() {
-        JTextField maximumBrightnessField = new JTextField(10);
+        JTextField calrMaximumBrightnessField = new JTextField(10);
         JCheckBox cleanGeneratedFilesCheckBox = new JCheckBox("Delete previously generated files in this directory before running?", true);
 
-        ((AbstractDocument) maximumBrightnessField.getDocument()).setDocumentFilter(new DocumentFilter() {
+        ((AbstractDocument) calrMaximumBrightnessField.getDocument()).setDocumentFilter(new DocumentFilter() {
             @Override
             public void insertString(FilterBypass fb, int offset, String string, AttributeSet attr)
                 throws BadLocationException {
@@ -335,14 +358,9 @@ public class MembranePlugin extends BasePlugin {
             }
         });
 
-        JPanel textPanel = new JPanel(new GridLayout(6, 1));
+        JPanel textPanel = new JPanel(new BorderLayout());
         textPanel.setBorder(BorderFactory.createEmptyBorder(15, 15, 0, 15));
-        textPanel.add(new JLabel("This plugin analyzes all images in the subdirectories of the directory chosen using Cyan Hot and Orange Hot LUTs."));
-        textPanel.add(new JLabel("Any '{name}--C00/C01/C02.tif' channel files are first RGB-merged (00=red, 01=green, 02=blue) into '{name}.tif'."));
-        textPanel.add(new JLabel("You must ensure that the .tif files contain exactly 2 slices."));
-        textPanel.add(new JLabel("Image directories are expected to be in the name format '{Sex} {Treatment} {Mouse #}' as this is included in the results."));
-        textPanel.add(new JLabel("Along with results, MERGED, CALR and Membrane .png images will be created for each image in the image directory."));
-        textPanel.add(new JLabel("Results will be created as a CSV file called Membrane_{Root Directory}_{Timestamp}.csv in the root directory."));
+        textPanel.add(new JLabel(DescribablePlugin.toSplashHtml(getDescription())));
 
         JPanel separatorPanel = new JPanel(new BorderLayout());
         separatorPanel.setBorder(BorderFactory.createEmptyBorder(8, 15, 8, 15));
@@ -350,8 +368,8 @@ public class MembranePlugin extends BasePlugin {
 
         JPanel inputPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 15, 0));
         inputPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 15));
-        inputPanel.add(new JLabel("Maximum Brightness: "));
-        inputPanel.add(maximumBrightnessField);
+        inputPanel.add(new JLabel("CALR Maximum Brightness: "));
+        inputPanel.add(calrMaximumBrightnessField);
 
         JPanel checkBoxPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 15, 0));
         checkBoxPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 15, 15));
@@ -368,9 +386,9 @@ public class MembranePlugin extends BasePlugin {
 
         Map<String, Object> result = new HashMap<>();
         result.put(INPUT_CLEAN_GENERATED_FILES, cleanGeneratedFilesCheckBox.isSelected());
-        String text = maximumBrightnessField.getText().trim();
+        String text = calrMaximumBrightnessField.getText().trim();
         if (!text.isEmpty()) {
-            result.put(INPUT_MAXIMUM_BRIGHTNESS, Double.parseDouble(text));
+            result.put(INPUT_CALR_MAXIMUM_BRIGHTNESS, Double.parseDouble(text));
         }
         return result;
     }

@@ -1,9 +1,11 @@
 package edu.uab.fiji.plugins.flourescenceintensity;
 
 import edu.uab.fiji.plugins.BasePlugin;
+import edu.uab.fiji.plugins.DescribablePlugin;
 import ij.IJ;
 import ij.plugin.frame.ThresholdAdjuster;
 import org.scijava.command.Command;
+import org.scijava.plugin.Menu;
 import org.scijava.plugin.Plugin;
 
 import javax.swing.*;
@@ -26,8 +28,9 @@ import java.util.Set;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
-@Plugin(name = "Fluorescence Intensity", type = Command.class, headless = true, menuPath = "UAB>Fluorescence Intensity")
-public class FluorescenceIntensityPlugin extends BasePlugin {
+@Plugin(name = "Fluorescence Intensity", type = Command.class, headless = true,
+    menu = {@Menu(label = "UAB"), @Menu(label = "Fluorescence Intensity", weight = 1d)})
+public class FluorescenceIntensityPlugin extends BasePlugin implements DescribablePlugin {
 
     public static void main(String[] args) {
         System.setProperty("ide", "true");
@@ -83,15 +86,27 @@ public class FluorescenceIntensityPlugin extends BasePlugin {
     }
 
     @Override
+    public String getPluginName() {
+        return "Fluorescence Intensity";
+    }
+
+    @Override
+    public String getDescription() {
+        return """
+            <p>Measures per-channel fluorescence intensity across all <code>.tif</code> images in the subdirectories of a chosen root directory.</p>
+            <p>Before running, place a <code>Positive Control.tif</code> and a <code>Negative Control.tif</code> at the root directory — both must be multi-channel merged images with color channel information.</p>
+            <p>The plugin derives per-channel thresholds from the positive control and background means from the negative control, then applies them when measuring each sample image. Images may be merged or separated by channel and can be nested in subdirectories.</p>
+            <p><b>Output:</b> <code>FluorescenceIntensity_{RootDirectory}_{Timestamp}.csv</code> written to the root directory.<br>
+            Columns: folder, channel type, area, mean, min, max, and integrated density.</p>""";
+    }
+
+    @Override
     public Map<String, Object> showStartupMessage() {
         JCheckBox cleanGeneratedFilesCheckBox = new JCheckBox("Delete previously generated files in this directory before running?", true);
 
-        JPanel textPanel = new JPanel(new GridLayout(4, 1));
+        JPanel textPanel = new JPanel(new BorderLayout());
         textPanel.setBorder(BorderFactory.createEmptyBorder(15, 15, 0, 15));
-        textPanel.add(new JLabel("This plugin analyzes all images in the subdirectories of the directory chosen."));
-        textPanel.add(new JLabel("You must ensure that a 'Positive Control.tif` and 'Negative Control.tif' are defined at the root directory and are merged with Color Channel information available."));
-        textPanel.add(new JLabel("You can nest the images into subdirectories, organizing them as you see fit. Images can be merged or separated by channel, the channel information must be on the image."));
-        textPanel.add(new JLabel("Results will be created as a CSV file called FluorescenceIntensity_{Root Directory}_{Timestamp}.csv in the root directory."));
+        textPanel.add(new JLabel(DescribablePlugin.toSplashHtml(getDescription())));
 
         JPanel separatorPanel = new JPanel(new BorderLayout());
         separatorPanel.setBorder(BorderFactory.createEmptyBorder(8, 15, 8, 15));
