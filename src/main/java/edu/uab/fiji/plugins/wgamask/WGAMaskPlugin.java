@@ -278,7 +278,9 @@ public class WGAMaskPlugin extends BasePlugin implements DescribablePlugin {
         bodyPanel.add(separatorPanel);
         bodyPanel.add(inputPanel);
 
-        showMessage(bodyPanel, "WGA Mask");
+        if (!showStartupDialog(bodyPanel, "WGA Mask")) {
+            return null;
+        }
         return Map.of(INPUT_CLEAN_GENERATED_FILES, cleanGeneratedFilesCheckBox.isSelected());
     }
 

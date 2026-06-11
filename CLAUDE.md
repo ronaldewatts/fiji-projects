@@ -35,7 +35,8 @@ Multiple commits may share a version while it is in progress.
 All plugins extend `BasePlugin`, which implements the full UI flow via a template method pattern in `run()`:
 
 1. `showStartupMessage()` — shows the startup dialog; returns a `Map<String, Object>` of user inputs (e.g. max
-   brightness). Return `Map.of()` if no inputs are needed.
+   brightness). Return `Map.of()` if no inputs are needed, or **`null` to signal the user cancelled** (see below).
+   When `run()` receives `null` it logs `Cancelled.` and returns without choosing a directory or processing anything.
 2. Directory chooser prompts the user for the root directory to process.
 3. If the inputs map has `INPUT_CLEAN_GENERATED_FILES` set to `true`, `cleanGeneratedFiles(rootDirectory)` deletes this
    plugin's previously generated files before processing (see below).
@@ -73,6 +74,11 @@ Authoring the HTML fragment (Swing renders a subset of HTML 3.2 + CSS):
 
 Note the dialog's input/checkbox panels and `showCompletionMessage` still use plain Swing layouts (`GridLayout`) — only
 the descriptive `textPanel` is HTML.
+
+Startup dialogs are shown via `BasePlugin.showStartupDialog(body, title)` (an OK/Cancel `JOptionPane`), **not** the
+OK-only `showMessage(...)` used for completion dialogs. Each `showStartupMessage()` returns `null` when
+`showStartupDialog` returns `false` (Cancel or window-close) so `run()` aborts. Both helpers share the UAB-monogram
+chrome via `wrapWithIcon`.
 
 ### Help — aggregated descriptions (`HelpPlugin`)
 

@@ -382,7 +382,9 @@ public class MembranePlugin extends BasePlugin implements DescribablePlugin {
         bodyPanel.add(inputPanel);
         bodyPanel.add(checkBoxPanel);
 
-        showMessage(bodyPanel, "Membrane");
+        if (!showStartupDialog(bodyPanel, "Membrane")) {
+            return null;
+        }
 
         Map<String, Object> result = new HashMap<>();
         result.put(INPUT_CLEAN_GENERATED_FILES, cleanGeneratedFilesCheckBox.isSelected());

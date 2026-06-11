@@ -312,7 +312,9 @@ public class WGAMaskAltColorsPlugin extends BasePlugin implements DescribablePlu
         bodyPanel.add(inputPanel);
         bodyPanel.add(checkBoxPanel);
 
-        showMessage(bodyPanel, "WGA Mask Alt Colors");
+        if (!showStartupDialog(bodyPanel, "WGA Mask Alt Colors")) {
+            return null;
+        }
 
         Map<String, Object> result = new HashMap<>();
         result.put(INPUT_CLEAN_GENERATED_FILES, cleanGeneratedFilesCheckBox.isSelected());

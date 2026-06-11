@@ -122,7 +122,9 @@ public class FluorescenceIntensityPlugin extends BasePlugin implements Describab
         bodyPanel.add(separatorPanel);
         bodyPanel.add(inputPanel);
 
-        showMessage(bodyPanel, "Fluorescence Intensity");
+        if (!showStartupDialog(bodyPanel, "Fluorescence Intensity")) {
+            return null;
+        }
         return Map.of(INPUT_CLEAN_GENERATED_FILES, cleanGeneratedFilesCheckBox.isSelected());
     }
 

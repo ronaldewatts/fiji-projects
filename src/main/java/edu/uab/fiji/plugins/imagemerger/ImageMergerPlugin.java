@@ -120,7 +120,9 @@ public class ImageMergerPlugin extends BasePlugin implements DescribablePlugin {
         textPanel.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
         textPanel.add(new JLabel(DescribablePlugin.toSplashHtml(getDescription())));
 
-        showMessage(textPanel, "Image Merger");
+        if (!showStartupDialog(textPanel, "Image Merger")) {
+            return null;
+        }
 
         return new HashMap<>();
     }

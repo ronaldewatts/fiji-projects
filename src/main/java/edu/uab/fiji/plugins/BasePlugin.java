@@ -34,6 +34,11 @@ public abstract class BasePlugin implements Command {
         }
 
         Map<String, Object> inputs = showStartupMessage();
+        if (inputs == null) {
+            // The user cancelled the startup dialog; abort before choosing a directory or processing anything.
+            IJ.log("Cancelled.");
+            return;
+        }
 
         IJ.log("\\Clear");
 
@@ -66,20 +71,39 @@ public abstract class BasePlugin implements Command {
 
     public abstract File buildResultsFile(Map<String, Object> inputs, String rootDirectory);
 
+    /**
+     * Shows the plugin's startup dialog and returns the collected inputs, or {@code null} if the user cancelled.
+     * Implementations present {@code body} via {@link #showStartupDialog(JPanel, String)} and must return {@code null}
+     * when that returns {@code false} so {@link #run()} can abort without processing anything.
+     */
     public abstract Map<String, Object> showStartupMessage();
 
     public abstract void showCompletionMessage(String resultFileAbsolutePath);
 
     public void showMessage(JPanel body, String title) {
+        JOptionPane.showMessageDialog(null, wrapWithIcon(body), title, JOptionPane.PLAIN_MESSAGE);
+    }
+
+    /**
+     * Shows {@code body} as a startup splash with an OK/Cancel choice.
+     *
+     * @return {@code true} if the user clicked OK, {@code false} if they cancelled or closed the dialog.
+     */
+    public boolean showStartupDialog(JPanel body, String title) {
+        int choice = JOptionPane.showConfirmDialog(null, wrapWithIcon(body), title,
+            JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+        return choice == JOptionPane.OK_OPTION;
+    }
+
+    private JPanel wrapWithIcon(JPanel body) {
         ImageIcon icon = new ImageIcon(Objects.requireNonNull(getClass().getResource("/new-uab-monogram.png")));
-        JLabel iconLabel = new JLabel(icon);
         JPanel iconPanel = new JPanel(new GridBagLayout());
-        iconPanel.add(iconLabel);
+        iconPanel.add(new JLabel(icon));
 
         JPanel panel = new JPanel(new BorderLayout());
         panel.add(iconPanel, BorderLayout.WEST);
         panel.add(body);
-        JOptionPane.showMessageDialog(null, panel, title, JOptionPane.PLAIN_MESSAGE);
+        return panel;
     }
 
     /**
