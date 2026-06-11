@@ -36,7 +36,8 @@ All plugins extend `BasePlugin`, which implements the full UI flow via a templat
 
 1. `showStartupMessage()` — shows the startup dialog; returns a `Map<String, Object>` of user inputs (e.g. max
    brightness). Return `Map.of()` if no inputs are needed, or **`null` to signal the user cancelled** (see below).
-   When `run()` receives `null` it logs `Cancelled.` and returns without choosing a directory or processing anything.
+   When `run()` receives `null` it returns silently without choosing a directory or processing anything (no log — a
+   `IJ.log` here would pop open Fiji's Log console for a no-op).
 2. Directory chooser prompts the user for the root directory to process.
 3. If the inputs map has `INPUT_CLEAN_GENERATED_FILES` set to `true`, `cleanGeneratedFiles(rootDirectory)` deletes this
    plugin's previously generated files before processing (see below).
@@ -77,7 +78,7 @@ the descriptive `textPanel` is HTML.
 
 Startup dialogs are shown via `BasePlugin.showStartupDialog(body, title)` (an OK/Cancel `JOptionPane`), **not** the
 OK-only `showMessage(...)` used for completion dialogs. Each `showStartupMessage()` returns `null` when
-`showStartupDialog` returns `false` (Cancel or window-close) so `run()` aborts. Both helpers share the UAB-monogram
+`showStartupDialog` returns `false` (Cancel or window-close) so `run()` aborts silently. Both helpers share the UAB-monogram
 chrome via `wrapWithIcon`.
 
 ### Help — aggregated descriptions (`HelpPlugin`)
@@ -107,10 +108,15 @@ ImageJ 1.x menu bar, and `net.imagej.legacy.IJ1Helper$IJ1MenuWrapper` bridges ou
 bridge honors weight only for *ordering*; for separators it inserts at most one divider per menu, solely at the boundary
 between built-in IJ1 items and bridge-injected items, and only when the menu already had items. The UAB menu is entirely
 bridge-injected, so it never qualifies — **weight differences produce no separator there.** To get the rule above Help we
-register `UABMenuSeparator` as a `@Plugin(type = LegacyPostRefreshMenus.class)`; Fiji calls its `run()` after the menu
-bar is (re)built (startup and every refresh), and it inserts an AWT separator above the `Help` item idempotently. This
-needs `imagej-legacy` at compile time, added to `pom.xml` with `provided` scope (Fiji supplies it at runtime; it is not
-bundled). Do not re-add a weight-based separator claim — it silently does nothing in Fiji.
+register `UABMenuSeparator` as a `@Plugin(type = LegacyPostRefreshMenus.class)`; Fiji calls its `run()` when the menu
+bar is (re)built, and it inserts an AWT separator above the `Help` item idempotently. The UAB items themselves are
+bridged in by `IJ1Helper.addMenuItems()`, which is *separate* from the menu refresh that fires this hook and is not
+guaranteed to run first — so on startup `Help` often does not exist yet when `run()` first fires. The hook therefore
+**polls on the EDT** (a `javax.swing.Timer`, ~250 ms cadence, bounded attempts) until the `Help` leaf appears, inserts
+the separator, then stops; the idempotency check (skip if the preceding item is already a `-` separator) keeps repeated
+refreshes from stacking dividers. This needs `imagej-legacy` at compile time, added to `pom.xml` with `provided` scope
+(Fiji supplies it at runtime; it is not bundled). Do not re-add a weight-based separator claim — it silently does
+nothing in Fiji, and do not assume the menu-refresh hook runs after the UAB items are added.
 
 **Generated-file cleanup:** `BasePlugin` exposes the `INPUT_CLEAN_GENERATED_FILES` input key and an overridable
 `getGeneratedFilePatterns()` hook returning regexes matched against file names only (default empty = delete nothing).

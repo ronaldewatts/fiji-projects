@@ -36,7 +36,7 @@ public abstract class BasePlugin implements Command {
         Map<String, Object> inputs = showStartupMessage();
         if (inputs == null) {
             // The user cancelled the startup dialog; abort before choosing a directory or processing anything.
-            IJ.log("Cancelled.");
+            // Deliberately silent — logging here would pop open Fiji's Log console for a no-op.
             return;
         }
 
