@@ -103,7 +103,8 @@ public class WGAMaskAltColorsPlugin extends BasePlugin implements DescribablePlu
                                     ImagePlus slice1Duplicate = slice1.duplicate();
                                     slice1Duplicate.setAutoThreshold("Huang dark");
                                     slice1Duplicate.setTitle(parentFolder + "/Total CALR/" + imageNumber);
-                                    measurements.add(getMeasurement(slice1Duplicate));
+                                    measurements.add(getMeasurement(slice1Duplicate, false));
+                                    measurements.add(getMeasurement(slice1Duplicate, true));
 
                                     ImagePlus slice2 = slices.get(1);
                                     ImagePlus slice2Duplicate = slice2.duplicate();
@@ -119,7 +120,8 @@ public class WGAMaskAltColorsPlugin extends BasePlugin implements DescribablePlu
 
                                     slice1Duplicate.setRoi(slice2DuplicateRoi);
                                     slice1Duplicate.setTitle(parentFolder + "/WGA-mask CALR/" + imageNumber);
-                                    measurements.add(getMeasurement(slice1Duplicate));
+                                    measurements.add(getMeasurement(slice1Duplicate, false));
+                                    measurements.add(getMeasurement(slice1Duplicate, true));
 
                                     slice1.setLut(new LUT(cyanHot.getValues()[0], cyanHot.getValues()[1], cyanHot.getValues()[2]));
                                     slice2.setLut(new LUT(orangeHot.getValues()[0], orangeHot.getValues()[1], orangeHot.getValues()[2]));
@@ -164,8 +166,10 @@ public class WGAMaskAltColorsPlugin extends BasePlugin implements DescribablePlu
         }
     }
 
-    private Measurement getMeasurement(ImagePlus imagePlus) {
-        ResultsTable rt = ResultsTableService.INSTANCE.measure(imagePlus);
+    private Measurement getMeasurement(ImagePlus imagePlus, boolean limitToThreshold) {
+        ResultsTable rt = limitToThreshold
+            ? ResultsTableService.INSTANCE.measureLimitedToThreshold(imagePlus)
+            : ResultsTableService.INSTANCE.measure(imagePlus);
         String label = rt.getLabel(0);
         String[] parsedLabel = label.split("/");
         long area = (long) rt.getValue("Area", 0);
@@ -181,6 +185,7 @@ public class WGAMaskAltColorsPlugin extends BasePlugin implements DescribablePlu
             parsedLabel[2],
             parsedLabel[3],
             parsedLabel[4],
+            limitToThreshold,
             area,
             mean,
             stdDev,

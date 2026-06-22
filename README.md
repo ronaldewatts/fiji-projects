@@ -108,6 +108,10 @@ The plugin produces two measurements per image:
   an ROI, which is then transferred to the CALR slice before Huang dark
   thresholding
 
+Each measurement is recorded twice — once over the full region and once with
+**Limit to Threshold** enabled (statistics restricted to the pixels inside the
+threshold) — distinguished by the `limit to threshold` column.
+
 CALR images are rendered with the **Green Fire Blue** LUT and WGA images with
 the **Yellow** LUT. Image directories must be named `{Sex} {Treatment} {Mouse #}`
 as these fields are parsed into the results.
@@ -115,8 +119,8 @@ as these fields are parsed into the results.
 **Output:**
 
 - `WGAMask_{RootDirectory}_{Timestamp}.csv` — columns: sex, treatment, mouse
-  number, stain, image number, area, mean, stddev, median, min, max, integrated
-  density
+  number, stain, image number, limit to threshold, area, mean, stddev, median,
+  min, max, integrated density
 - `{ImageNumber}_CALR_RBS25.png`, `{ImageNumber}_WGA_RBS25.png`,
   `{ImageNumber}_MERGED_RBS25.png` saved alongside each source image
 
@@ -168,6 +172,10 @@ The plugin produces two measurements per image:
 - **Membrane CALR** — IsoData dark auto-threshold applied to the membrane slice
   to create an ROI, which is then transferred to the CALR slice for measurement
 
+Each measurement is recorded twice — once over the full region and once with
+**Limit to Threshold** enabled (statistics restricted to the pixels inside the
+threshold) — distinguished by the `limit to threshold` column.
+
 Images are rendered with the **Cyan Hot** LUT for CALR and **Orange Hot** for
 the membrane channel. Like WGA Mask Alt Colors, an optional **CALR Maximum
 Brightness** input can be provided to cap the CALR display range; the membrane
@@ -178,8 +186,8 @@ before its PNG is saved. Image directories must be named
 **Output:**
 
 - `Membrane_{RootDirectory}_{Timestamp}.csv` — columns: sex, treatment, mouse
-  number, stain, image number, area, mean, stddev, median, min, max, integrated
-  density
+  number, stain, image number, limit to threshold, area, mean, stddev, median,
+  min, max, integrated density
 - `{ImageNumber}_CALR_RBS25.png`, `{ImageNumber}_Membrane_RBS25.png`,
   `{ImageNumber}_MERGED_RBS25.png` saved alongside each source image
 

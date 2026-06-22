@@ -125,7 +125,8 @@ public class MembranePlugin extends BasePlugin implements DescribablePlugin {
                                     ImagePlus slice1Duplicate = slice1.duplicate();
                                     slice1Duplicate.setAutoThreshold("IsoData dark");
                                     slice1Duplicate.setTitle(parentFolder + "/Total CALR/" + imageNumber);
-                                    measurements.add(getMeasurement(slice1Duplicate));
+                                    measurements.add(getMeasurement(slice1Duplicate, false));
+                                    measurements.add(getMeasurement(slice1Duplicate, true));
 
                                     ImagePlus slice2 = slices.get(1);
                                     slice2.setAutoThreshold("IsoData dark");
@@ -134,7 +135,8 @@ public class MembranePlugin extends BasePlugin implements DescribablePlugin {
 
                                     slice1Duplicate.setRoi(slice2Roi);
                                     slice1Duplicate.setTitle(parentFolder + "/Membrane CALR/" + imageNumber);
-                                    measurements.add(getMeasurement(slice1Duplicate));
+                                    measurements.add(getMeasurement(slice1Duplicate, false));
+                                    measurements.add(getMeasurement(slice1Duplicate, true));
 
                                     slice1.setLut(new LUT(cyanHot.getValues()[0], cyanHot.getValues()[1], cyanHot.getValues()[2]));
                                     slice2.setLut(new LUT(orangeHot.getValues()[0], orangeHot.getValues()[1], orangeHot.getValues()[2]));
@@ -233,8 +235,10 @@ public class MembranePlugin extends BasePlugin implements DescribablePlugin {
         }
     }
 
-    private Measurement getMeasurement(ImagePlus imagePlus) {
-        ResultsTable rt = ResultsTableService.INSTANCE.measure(imagePlus);
+    private Measurement getMeasurement(ImagePlus imagePlus, boolean limitToThreshold) {
+        ResultsTable rt = limitToThreshold
+            ? ResultsTableService.INSTANCE.measureLimitedToThreshold(imagePlus)
+            : ResultsTableService.INSTANCE.measure(imagePlus);
         String label = rt.getLabel(0);
         String[] parsedLabel = label.split("/");
         long area = (long) rt.getValue("Area", 0);
@@ -250,6 +254,7 @@ public class MembranePlugin extends BasePlugin implements DescribablePlugin {
             parsedLabel[2],
             parsedLabel[3],
             parsedLabel[4],
+            limitToThreshold,
             area,
             mean,
             stdDev,
@@ -341,6 +346,7 @@ public class MembranePlugin extends BasePlugin implements DescribablePlugin {
               <li><b>Total CALR</b> — IsoData dark auto-threshold applied to the CALR slice</li>
               <li><b>Membrane CALR</b> — IsoData dark on the membrane slice creates an ROI, transferred to the CALR slice for measurement</li>
             </ul>
+            <p>Each measurement is recorded twice — once over the full region and once with <b>Limit to Threshold</b> enabled (statistics restricted to pixels inside the threshold) — distinguished by the <code>Limit to Threshold</code> column.</p>
             <p>Images are rendered with the <b>Cyan Hot</b> LUT for CALR and <b>Orange Hot</b> for the membrane channel. An optional <b>CALR Maximum Brightness</b> caps the CALR display range; the membrane channel display range is auto-adjusted. Image directories must be named <code>{Sex} {Treatment} {Mouse #}</code>.</p>
             <p><b>Output:</b> <code>Membrane_{RootDirectory}_{Timestamp}.csv</code> in the root directory, plus <code>{ImageNumber}_CALR_RBS25.png</code>, <code>_Membrane_RBS25.png</code> and <code>_MERGED_RBS25.png</code> alongside each source image.</p>""";
     }

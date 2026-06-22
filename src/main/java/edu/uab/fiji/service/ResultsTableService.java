@@ -11,6 +11,8 @@ import java.math.RoundingMode;
 public class ResultsTableService {
 
     private static final String FULL_MEASUREMENTS = "area mean standard median min integrated display redirect=None decimal=3";
+    // Same set, but "limit" restricts every statistic to pixels within the image's active threshold.
+    private static final String LIMITED_MEASUREMENTS = "area mean standard median min integrated limit display redirect=None decimal=3";
 
     public static final ResultsTableService INSTANCE = new ResultsTableService();
     private final ResultsTable resultsTable;
@@ -50,6 +52,18 @@ public class ResultsTableService {
             reset();
         }
         IJ.run(imagePlus, "Measure", "");
+        return resultsTable;
+    }
+
+    /**
+     * Measures with "Limit to threshold" enabled, so every statistic is restricted to the pixels inside the
+     * image's active threshold. The full measurement set is restored before returning.
+     */
+    public ResultsTable measureLimitedToThreshold(ImagePlus imagePlus) {
+        reset();
+        IJ.run("Set Measurements...", LIMITED_MEASUREMENTS);
+        IJ.run(imagePlus, "Measure", "");
+        IJ.run("Set Measurements...", FULL_MEASUREMENTS);
         return resultsTable;
     }
 }

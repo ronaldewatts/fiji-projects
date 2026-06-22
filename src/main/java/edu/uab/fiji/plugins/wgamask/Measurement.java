@@ -3,7 +3,7 @@ package edu.uab.fiji.plugins.wgamask;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 
-public record Measurement(String sex, String treatment, String mouseNumber, String stain, String imageNumber, long area, BigDecimal mean, BigDecimal stdDev, BigDecimal median, long min, long max, long integratedDensity) {
+public record Measurement(String sex, String treatment, String mouseNumber, String stain, String imageNumber, boolean limitToThreshold, long area, BigDecimal mean, BigDecimal stdDev, BigDecimal median, long min, long max, long integratedDensity) {
 
     public static String toCsvHeader() {
         return "Sex," +
@@ -11,6 +11,7 @@ public record Measurement(String sex, String treatment, String mouseNumber, Stri
             "Mouse #," +
             "Stain," +
             "Image Number," +
+            "Limit to Threshold," +
             "Area," +
             "Mean," +
             "StdDev," +
@@ -28,6 +29,7 @@ public record Measurement(String sex, String treatment, String mouseNumber, Stri
             mouseNumber + "," +
             stain + "," +
             imageNumber + "," +
+            limitToThreshold + "," +
             area + "," +
             mean + "," +
             stdDev + "," +
