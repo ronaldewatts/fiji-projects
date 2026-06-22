@@ -168,9 +168,17 @@ processing continues normally.
 
 The plugin produces two measurements per image:
 
-- **Total CALR** — IsoData dark auto-threshold applied to the CALR slice
-- **Membrane CALR** — IsoData dark auto-threshold applied to the membrane slice
-  to create an ROI, which is then transferred to the CALR slice for measurement
+- **Total CALR** — the selected **Total CALR threshold** applied to the CALR
+  slice
+- **Membrane CALR** — the selected **Membrane threshold** applied to the
+  membrane slice to create an ROI, which is then transferred to the CALR slice
+  for measurement
+
+Both auto-threshold methods are chosen from drop-downs on the startup screen
+(populated from ImageJ's auto-threshold methods), each with its own **Dark
+background** checkbox; both default to **IsoData dark**. The chosen method is
+recorded in the `Stain` column — e.g. `Membrane CALR (IsoData dark)`. Output
+rows are sorted by image number, then stain.
 
 Each measurement is recorded twice — once over the full region and once with
 **Limit to Threshold** enabled (statistics restricted to the pixels inside the

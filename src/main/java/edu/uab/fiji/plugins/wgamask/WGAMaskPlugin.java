@@ -140,11 +140,10 @@ public class WGAMaskPlugin extends BasePlugin implements DescribablePlugin {
                 }
             }
 
-            Comparator<Measurement> comparator = Comparator.comparing(Measurement::sex).reversed()
-                .thenComparing(Comparator.comparing(Measurement::treatment).reversed())
-                .thenComparing(Measurement::stain)
-                .thenComparing(Measurement::mouseNumber)
-                .thenComparing(Measurement::imageNumber);
+            // Sort by image number, then stain. Equal keys keep insertion order, so the full-region row precedes its
+            // Limit-to-Threshold counterpart.
+            Comparator<Measurement> comparator = Comparator.comparing(Measurement::imageNumber)
+                .thenComparing(Measurement::stain);
 
             measurements.sort(comparator);
 

@@ -9,6 +9,7 @@ import ij.ImageStack;
 import ij.gui.Roi;
 import ij.measure.ResultsTable;
 import ij.plugin.RGBStackMerge;
+import ij.process.AutoThresholder;
 import ij.process.ImageProcessor;
 import ij.process.LUT;
 import net.imagej.lut.LUTService;
@@ -37,6 +38,7 @@ import java.text.DecimalFormat;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -53,6 +55,12 @@ import java.util.stream.Stream;
 public class MembranePlugin extends BasePlugin implements DescribablePlugin {
 
     public static final String INPUT_CALR_MAXIMUM_BRIGHTNESS = "calrMaximumBrightness";
+    public static final String INPUT_TOTAL_CALR_THRESHOLD = "totalCalrThreshold";
+    public static final String INPUT_MEMBRANE_THRESHOLD = "membraneThreshold";
+
+    // Default auto-threshold method and background for both slices; matches the historical "IsoData dark" behavior.
+    private static final String DEFAULT_THRESHOLD_METHOD = "IsoData";
+    private static final String DEFAULT_THRESHOLD = "IsoData dark";
 
     private static final Pattern DIGITS = Pattern.compile("\\d+");
 
@@ -76,6 +84,8 @@ public class MembranePlugin extends BasePlugin implements DescribablePlugin {
         Set<String> processedImages = new HashSet<>();
         List<Measurement> measurements = new ArrayList<>();
         Double calrMaximumBrightness = (Double) inputs.get(INPUT_CALR_MAXIMUM_BRIGHTNESS);
+        String totalCalrThreshold = (String) inputs.getOrDefault(INPUT_TOTAL_CALR_THRESHOLD, DEFAULT_THRESHOLD);
+        String membraneThreshold = (String) inputs.getOrDefault(INPUT_MEMBRANE_THRESHOLD, DEFAULT_THRESHOLD);
 
         try (Context context = new Context()) {
             LUTService lutService = context.getService(LUTService.class);
@@ -123,18 +133,18 @@ public class MembranePlugin extends BasePlugin implements DescribablePlugin {
                                     List<ImagePlus> slices = getImageSlices(image);
                                     ImagePlus slice1 = slices.getFirst();
                                     ImagePlus slice1Duplicate = slice1.duplicate();
-                                    slice1Duplicate.setAutoThreshold("IsoData dark");
-                                    slice1Duplicate.setTitle(parentFolder + "/Total CALR/" + imageNumber);
+                                    slice1Duplicate.setAutoThreshold(totalCalrThreshold);
+                                    slice1Duplicate.setTitle(parentFolder + "/Total CALR (" + totalCalrThreshold + ")/" + imageNumber);
                                     measurements.add(getMeasurement(slice1Duplicate, false));
                                     measurements.add(getMeasurement(slice1Duplicate, true));
 
                                     ImagePlus slice2 = slices.get(1);
-                                    slice2.setAutoThreshold("IsoData dark");
+                                    slice2.setAutoThreshold(membraneThreshold);
                                     IJ.run(slice2, "Create Selection", "");
                                     Roi slice2Roi = slice2.getRoi();
 
                                     slice1Duplicate.setRoi(slice2Roi);
-                                    slice1Duplicate.setTitle(parentFolder + "/Membrane CALR/" + imageNumber);
+                                    slice1Duplicate.setTitle(parentFolder + "/Membrane CALR (" + membraneThreshold + ")/" + imageNumber);
                                     measurements.add(getMeasurement(slice1Duplicate, false));
                                     measurements.add(getMeasurement(slice1Duplicate, true));
 
@@ -171,11 +181,10 @@ public class MembranePlugin extends BasePlugin implements DescribablePlugin {
                 }
             }
 
-            Comparator<Measurement> comparator = Comparator.comparing(Measurement::sex).reversed()
-                .thenComparing(Comparator.comparing(Measurement::treatment).reversed())
-                .thenComparing(Measurement::stain)
-                .thenComparing(Measurement::mouseNumber)
-                .thenComparing(Measurement::imageNumber);
+            // Sort by image number, then stain (which now carries the threshold). Equal keys keep insertion order, so
+            // the full-region row precedes its Limit-to-Threshold counterpart.
+            Comparator<Measurement> comparator = Comparator.comparing(Measurement::imageNumber)
+                .thenComparing(Measurement::stain);
 
             measurements.sort(comparator);
 
@@ -265,6 +274,15 @@ public class MembranePlugin extends BasePlugin implements DescribablePlugin {
         );
     }
 
+    /**
+     * Composes the threshold string consumed by {@link ImagePlus#setAutoThreshold(String)} from the selected method and
+     * the "Dark background" checkbox — e.g. {@code "IsoData dark"} or just {@code "Otsu"}.
+     */
+    private String buildThresholdString(JComboBox<String> methodBox, JCheckBox darkBox) {
+        String method = (String) methodBox.getSelectedItem();
+        return darkBox.isSelected() ? method + " dark" : method;
+    }
+
     private List<ImagePlus> getImageSlices(ImagePlus image) {
         String imageTitle = image.getTitle();
         String imageSliceLabel;
@@ -343,9 +361,10 @@ public class MembranePlugin extends BasePlugin implements DescribablePlugin {
             <p><b>Channel-file merging:</b> any <code>{name}--C00/C01/C02.tif</code> source files are first RGB-merged (00=red, 01=green, 02=blue) into <code>{name}.tif</code>; slice 1 (red) is the CALR channel and slice 2 (green) the membrane channel, while blue (C02) is retained but not measured.</p>
             <p>Two measurements are produced per image:</p>
             <ul>
-              <li><b>Total CALR</b> — IsoData dark auto-threshold applied to the CALR slice</li>
-              <li><b>Membrane CALR</b> — IsoData dark on the membrane slice creates an ROI, transferred to the CALR slice for measurement</li>
+              <li><b>Total CALR</b> — the chosen <b>Total CALR threshold</b> applied to the CALR slice</li>
+              <li><b>Membrane CALR</b> — the chosen <b>Membrane threshold</b> on the membrane slice creates an ROI, transferred to the CALR slice for measurement</li>
             </ul>
+            <p>Both auto-threshold methods are selectable at startup (each with its own <b>Dark background</b> option); both default to <b>IsoData dark</b>. The chosen method is recorded in the <code>Stain</code> column — e.g. <code>Membrane CALR (IsoData dark)</code>.</p>
             <p>Each measurement is recorded twice — once over the full region and once with <b>Limit to Threshold</b> enabled (statistics restricted to pixels inside the threshold) — distinguished by the <code>Limit to Threshold</code> column.</p>
             <p>Images are rendered with the <b>Cyan Hot</b> LUT for CALR and <b>Orange Hot</b> for the membrane channel. An optional <b>CALR Maximum Brightness</b> caps the CALR display range; the membrane channel display range is auto-adjusted. Image directories must be named <code>{Sex} {Treatment} {Mouse #}</code>.</p>
             <p><b>Output:</b> <code>Membrane_{RootDirectory}_{Timestamp}.csv</code> in the root directory, plus <code>{ImageNumber}_CALR_RBS25.png</code>, <code>_Membrane_RBS25.png</code> and <code>_MERGED_RBS25.png</code> alongside each source image.</p>""";
@@ -382,10 +401,34 @@ public class MembranePlugin extends BasePlugin implements DescribablePlugin {
         separatorPanel.setBorder(BorderFactory.createEmptyBorder(8, 15, 8, 15));
         separatorPanel.add(new JSeparator(), BorderLayout.CENTER);
 
+        String[] thresholdMethods = Arrays.stream(AutoThresholder.Method.values())
+            .map(Enum::name)
+            .toArray(String[]::new);
+
+        JComboBox<String> totalCalrMethodBox = new JComboBox<>(thresholdMethods);
+        totalCalrMethodBox.setSelectedItem(DEFAULT_THRESHOLD_METHOD);
+        JCheckBox totalCalrDarkBox = new JCheckBox("Dark background", true);
+
+        JComboBox<String> membraneMethodBox = new JComboBox<>(thresholdMethods);
+        membraneMethodBox.setSelectedItem(DEFAULT_THRESHOLD_METHOD);
+        JCheckBox membraneDarkBox = new JCheckBox("Dark background", true);
+
         JPanel inputPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 15, 0));
         inputPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 15));
         inputPanel.add(new JLabel("CALR Maximum Brightness: "));
         inputPanel.add(calrMaximumBrightnessField);
+
+        JPanel totalCalrThresholdPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 15, 0));
+        totalCalrThresholdPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 15));
+        totalCalrThresholdPanel.add(new JLabel("Total CALR threshold: "));
+        totalCalrThresholdPanel.add(totalCalrMethodBox);
+        totalCalrThresholdPanel.add(totalCalrDarkBox);
+
+        JPanel membraneThresholdPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 15, 0));
+        membraneThresholdPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 15));
+        membraneThresholdPanel.add(new JLabel("Membrane threshold: "));
+        membraneThresholdPanel.add(membraneMethodBox);
+        membraneThresholdPanel.add(membraneDarkBox);
 
         JPanel checkBoxPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 15, 0));
         checkBoxPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 15, 15));
@@ -396,6 +439,8 @@ public class MembranePlugin extends BasePlugin implements DescribablePlugin {
         bodyPanel.add(textPanel);
         bodyPanel.add(separatorPanel);
         bodyPanel.add(inputPanel);
+        bodyPanel.add(totalCalrThresholdPanel);
+        bodyPanel.add(membraneThresholdPanel);
         bodyPanel.add(checkBoxPanel);
 
         if (!showStartupDialog(bodyPanel, "Membrane")) {
@@ -404,6 +449,8 @@ public class MembranePlugin extends BasePlugin implements DescribablePlugin {
 
         Map<String, Object> result = new HashMap<>();
         result.put(INPUT_CLEAN_GENERATED_FILES, cleanGeneratedFilesCheckBox.isSelected());
+        result.put(INPUT_TOTAL_CALR_THRESHOLD, buildThresholdString(totalCalrMethodBox, totalCalrDarkBox));
+        result.put(INPUT_MEMBRANE_THRESHOLD, buildThresholdString(membraneMethodBox, membraneDarkBox));
         String text = calrMaximumBrightnessField.getText().trim();
         if (!text.isEmpty()) {
             result.put(INPUT_CALR_MAXIMUM_BRIGHTNESS, Double.parseDouble(text));
