@@ -10,7 +10,7 @@ import java.math.RoundingMode;
 
 public class ResultsTableService {
 
-    private static final String FULL_MEASUREMENTS = "area mean min integrated display redirect=None decimal=3";
+    private static final String FULL_MEASUREMENTS = "area mean standard median min integrated display redirect=None decimal=3";
 
     public static final ResultsTableService INSTANCE = new ResultsTableService();
     private final ResultsTable resultsTable;

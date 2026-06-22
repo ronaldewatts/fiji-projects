@@ -115,7 +115,8 @@ as these fields are parsed into the results.
 **Output:**
 
 - `WGAMask_{RootDirectory}_{Timestamp}.csv` — columns: sex, treatment, mouse
-  number, stain, image number, area, mean, min, max, integrated density
+  number, stain, image number, area, mean, stddev, median, min, max, integrated
+  density
 - `{ImageNumber}_CALR_RBS25.png`, `{ImageNumber}_WGA_RBS25.png`,
   `{ImageNumber}_MERGED_RBS25.png` saved alongside each source image
 
@@ -177,7 +178,8 @@ before its PNG is saved. Image directories must be named
 **Output:**
 
 - `Membrane_{RootDirectory}_{Timestamp}.csv` — columns: sex, treatment, mouse
-  number, stain, image number, area, mean, min, max, integrated density
+  number, stain, image number, area, mean, stddev, median, min, max, integrated
+  density
 - `{ImageNumber}_CALR_RBS25.png`, `{ImageNumber}_Membrane_RBS25.png`,
   `{ImageNumber}_MERGED_RBS25.png` saved alongside each source image
 

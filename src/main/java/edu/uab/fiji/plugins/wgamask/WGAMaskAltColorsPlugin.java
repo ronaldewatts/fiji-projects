@@ -170,6 +170,8 @@ public class WGAMaskAltColorsPlugin extends BasePlugin implements DescribablePlu
         String[] parsedLabel = label.split("/");
         long area = (long) rt.getValue("Area", 0);
         BigDecimal mean = BigDecimal.valueOf(rt.getValue("Mean", 0)).setScale(3, RoundingMode.HALF_UP);
+        BigDecimal stdDev = BigDecimal.valueOf(rt.getValue("StdDev", 0)).setScale(3, RoundingMode.HALF_UP);
+        BigDecimal median = BigDecimal.valueOf(rt.getValue("Median", 0)).setScale(3, RoundingMode.HALF_UP);
         long min = (long) rt.getValue("Min", 0);
         long max = (long) rt.getValue("Max", 0);
         long integratedDensity = (long) rt.getValue("IntDen", 0);
@@ -181,6 +183,8 @@ public class WGAMaskAltColorsPlugin extends BasePlugin implements DescribablePlu
             parsedLabel[4],
             area,
             mean,
+            stdDev,
+            median,
             min,
             max,
             integratedDensity
