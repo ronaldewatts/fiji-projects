@@ -108,9 +108,10 @@ The plugin produces two measurements per image:
   an ROI, which is then transferred to the CALR slice before Huang dark
   thresholding
 
-Each measurement is recorded twice — once over the full region and once with
-**Limit to Threshold** enabled (statistics restricted to the pixels inside the
-threshold) — distinguished by the `limit to threshold` column.
+Two **Limit to Threshold** checkboxes at startup (one per measurement, both
+checked by default) independently restrict each measurement's statistics to the
+pixels inside its threshold; unchecked, that measurement covers the full region.
+The chosen mode is recorded per row in the `limit to threshold` column.
 
 CALR images are rendered with the **Green Fire Blue** LUT and WGA images with
 the **Yellow** LUT. Image directories must be named `{Sex} {Treatment} {Mouse #}`
@@ -180,9 +181,10 @@ background** checkbox; both default to **IsoData dark**. The chosen method is
 recorded in the `Stain` column — e.g. `Membrane CALR (IsoData dark)`. Output
 rows are sorted by image number, then stain.
 
-Each measurement is recorded twice — once over the full region and once with
-**Limit to Threshold** enabled (statistics restricted to the pixels inside the
-threshold) — distinguished by the `limit to threshold` column.
+Two **Limit to Threshold** checkboxes at startup (one per measurement, both
+checked by default) independently restrict each measurement's statistics to the
+pixels inside its threshold; unchecked, that measurement covers the full region.
+The chosen mode is recorded per row in the `limit to threshold` column.
 
 Images are rendered with the **Cyan Hot** LUT for CALR and **Orange Hot** for
 the membrane channel. Like WGA Mask Alt Colors, an optional **CALR Maximum

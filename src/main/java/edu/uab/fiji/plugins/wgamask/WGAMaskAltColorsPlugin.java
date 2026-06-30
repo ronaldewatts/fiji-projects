@@ -51,6 +51,8 @@ import java.util.stream.Stream;
 public class WGAMaskAltColorsPlugin extends BasePlugin implements DescribablePlugin {
 
     public static final String INPUT_CALR_MAXIMUM_BRIGHTNESS = "calrMaximumBrightness";
+    public static final String INPUT_TOTAL_CALR_LIMIT_TO_THRESHOLD = "totalCalrLimitToThreshold";
+    public static final String INPUT_MASK_LIMIT_TO_THRESHOLD = "maskLimitToThreshold";
 
     private static final Pattern DIGITS = Pattern.compile("\\d+");
 
@@ -67,6 +69,8 @@ public class WGAMaskAltColorsPlugin extends BasePlugin implements DescribablePlu
         Set<String> processedImages = new HashSet<>();
         List<Measurement> measurements = new ArrayList<>();
         Double calrMaximumBrightness = (Double) inputs.get(INPUT_CALR_MAXIMUM_BRIGHTNESS);
+        boolean totalCalrLimit = (boolean) inputs.getOrDefault(INPUT_TOTAL_CALR_LIMIT_TO_THRESHOLD, true);
+        boolean maskLimit = (boolean) inputs.getOrDefault(INPUT_MASK_LIMIT_TO_THRESHOLD, true);
 
         try (Context context = new Context()) {
             LUTService lutService = context.getService(LUTService.class);
@@ -103,8 +107,7 @@ public class WGAMaskAltColorsPlugin extends BasePlugin implements DescribablePlu
                                     ImagePlus slice1Duplicate = slice1.duplicate();
                                     slice1Duplicate.setAutoThreshold("Huang dark");
                                     slice1Duplicate.setTitle(parentFolder + "/Total CALR/" + imageNumber);
-                                    measurements.add(getMeasurement(slice1Duplicate, false));
-                                    measurements.add(getMeasurement(slice1Duplicate, true));
+                                    measurements.add(getMeasurement(slice1Duplicate, totalCalrLimit));
 
                                     ImagePlus slice2 = slices.get(1);
                                     ImagePlus slice2Duplicate = slice2.duplicate();
@@ -120,8 +123,7 @@ public class WGAMaskAltColorsPlugin extends BasePlugin implements DescribablePlu
 
                                     slice1Duplicate.setRoi(slice2DuplicateRoi);
                                     slice1Duplicate.setTitle(parentFolder + "/WGA-mask CALR/" + imageNumber);
-                                    measurements.add(getMeasurement(slice1Duplicate, false));
-                                    measurements.add(getMeasurement(slice1Duplicate, true));
+                                    measurements.add(getMeasurement(slice1Duplicate, maskLimit));
 
                                     slice1.setLut(new LUT(cyanHot.getValues()[0], cyanHot.getValues()[1], cyanHot.getValues()[2]));
                                     slice2.setLut(new LUT(orangeHot.getValues()[0], orangeHot.getValues()[1], orangeHot.getValues()[2]));
@@ -154,8 +156,7 @@ public class WGAMaskAltColorsPlugin extends BasePlugin implements DescribablePlu
                 }
             }
 
-            // Sort by image number, then stain. Equal keys keep insertion order, so the full-region row precedes its
-            // Limit-to-Threshold counterpart.
+            // Sort by image number, then stain.
             Comparator<Measurement> comparator = Comparator.comparing(Measurement::imageNumber)
                 .thenComparing(Measurement::stain);
 
@@ -277,6 +278,8 @@ public class WGAMaskAltColorsPlugin extends BasePlugin implements DescribablePlu
     @Override
     public Map<String, Object> showStartupMessage() {
         JTextField calrMaximumBrightnessField = new JTextField(10);
+        JCheckBox totalCalrLimitBox = new JCheckBox("Limit Total CALR to threshold", true);
+        JCheckBox maskLimitBox = new JCheckBox("Limit WGA-mask CALR to threshold", true);
         JCheckBox cleanGeneratedFilesCheckBox = new JCheckBox("Delete previously generated files in this directory before running?", true);
 
         ((AbstractDocument) calrMaximumBrightnessField.getDocument()).setDocumentFilter(new DocumentFilter() {
@@ -310,6 +313,11 @@ public class WGAMaskAltColorsPlugin extends BasePlugin implements DescribablePlu
         inputPanel.add(new JLabel("CALR Maximum Brightness: "));
         inputPanel.add(calrMaximumBrightnessField);
 
+        JPanel limitPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 15, 0));
+        limitPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 15));
+        limitPanel.add(totalCalrLimitBox);
+        limitPanel.add(maskLimitBox);
+
         JPanel checkBoxPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 15, 0));
         checkBoxPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 15, 15));
         checkBoxPanel.add(cleanGeneratedFilesCheckBox);
@@ -319,6 +327,7 @@ public class WGAMaskAltColorsPlugin extends BasePlugin implements DescribablePlu
         bodyPanel.add(textPanel);
         bodyPanel.add(separatorPanel);
         bodyPanel.add(inputPanel);
+        bodyPanel.add(limitPanel);
         bodyPanel.add(checkBoxPanel);
 
         if (!showStartupDialog(bodyPanel, "WGA Mask Alt Colors")) {
@@ -327,6 +336,8 @@ public class WGAMaskAltColorsPlugin extends BasePlugin implements DescribablePlu
 
         Map<String, Object> result = new HashMap<>();
         result.put(INPUT_CLEAN_GENERATED_FILES, cleanGeneratedFilesCheckBox.isSelected());
+        result.put(INPUT_TOTAL_CALR_LIMIT_TO_THRESHOLD, totalCalrLimitBox.isSelected());
+        result.put(INPUT_MASK_LIMIT_TO_THRESHOLD, maskLimitBox.isSelected());
         String text = calrMaximumBrightnessField.getText().trim();
         if (!text.isEmpty()) {
             result.put(INPUT_CALR_MAXIMUM_BRIGHTNESS, Double.parseDouble(text));

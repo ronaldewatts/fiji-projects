@@ -45,6 +45,9 @@ import java.util.stream.Stream;
     menu = {@Menu(label = "UAB"), @Menu(label = "WGA Mask", weight = 1d)})
 public class WGAMaskPlugin extends BasePlugin implements DescribablePlugin {
 
+    public static final String INPUT_TOTAL_CALR_LIMIT_TO_THRESHOLD = "totalCalrLimitToThreshold";
+    public static final String INPUT_MASK_LIMIT_TO_THRESHOLD = "maskLimitToThreshold";
+
     public static void main(String[] args) {
         System.setProperty("ide", "true");
 
@@ -57,6 +60,8 @@ public class WGAMaskPlugin extends BasePlugin implements DescribablePlugin {
         List<String> imageDirectories = getImageDirectories(rootDirectory);
         Set<String> processedImages = new HashSet<>();
         List<Measurement> measurements = new ArrayList<>();
+        boolean totalCalrLimit = (boolean) inputs.getOrDefault(INPUT_TOTAL_CALR_LIMIT_TO_THRESHOLD, true);
+        boolean maskLimit = (boolean) inputs.getOrDefault(INPUT_MASK_LIMIT_TO_THRESHOLD, true);
 
         try (Context context = new Context()) {
             LUTService lutService = context.getService(LUTService.class);
@@ -93,8 +98,7 @@ public class WGAMaskPlugin extends BasePlugin implements DescribablePlugin {
                                     ImagePlus slice1Duplicate = slice1.duplicate();
                                     slice1Duplicate.setAutoThreshold("Huang dark");
                                     slice1Duplicate.setTitle(parentFolder + "/Total CALR/" + imageNumber);
-                                    measurements.add(getMeasurement(slice1Duplicate, false));
-                                    measurements.add(getMeasurement(slice1Duplicate, true));
+                                    measurements.add(getMeasurement(slice1Duplicate, totalCalrLimit));
 
                                     ImagePlus slice2 = slices.get(1);
                                     ImagePlus slice2Duplicate = slice2.duplicate();
@@ -110,8 +114,7 @@ public class WGAMaskPlugin extends BasePlugin implements DescribablePlugin {
 
                                     slice1Duplicate.setRoi(slice2DuplicateRoi);
                                     slice1Duplicate.setTitle(parentFolder + "/WGA-mask CALR/" + imageNumber);
-                                    measurements.add(getMeasurement(slice1Duplicate, false));
-                                    measurements.add(getMeasurement(slice1Duplicate, true));
+                                    measurements.add(getMeasurement(slice1Duplicate, maskLimit));
 
                                     slice1.setLut(new LUT(greenFireBlue.getValues()[0], greenFireBlue.getValues()[1], greenFireBlue.getValues()[2]));
                                     slice2.setLut(new LUT(yellow.getValues()[0], yellow.getValues()[1], yellow.getValues()[2]));
@@ -140,8 +143,7 @@ public class WGAMaskPlugin extends BasePlugin implements DescribablePlugin {
                 }
             }
 
-            // Sort by image number, then stain. Equal keys keep insertion order, so the full-region row precedes its
-            // Limit-to-Threshold counterpart.
+            // Sort by image number, then stain.
             Comparator<Measurement> comparator = Comparator.comparing(Measurement::imageNumber)
                 .thenComparing(Measurement::stain);
 
@@ -261,13 +263,15 @@ public class WGAMaskPlugin extends BasePlugin implements DescribablePlugin {
               <li><b>Total CALR</b> — Huang dark auto-threshold applied to the CALR slice</li>
               <li><b>WGA-mask CALR</b> — Intermodes threshold on the WGA slice creates an ROI, transferred to the CALR slice before Huang dark thresholding</li>
             </ul>
-            <p>Each measurement is recorded twice — once over the full region and once with <b>Limit to Threshold</b> enabled (statistics restricted to pixels inside the threshold) — distinguished by the <code>Limit to Threshold</code> column.</p>
+            <p>Two <b>Limit to Threshold</b> checkboxes at startup (one per measurement, both checked by default) independently restrict each measurement's statistics to the pixels inside its threshold; unchecked, that measurement covers the full region. The chosen mode is recorded per row in the <code>Limit to Threshold</code> column.</p>
             <p>CALR images are rendered with the <b>Green Fire Blue</b> LUT and WGA images with the <b>Yellow</b> LUT. Image directories must be named <code>{Sex} {Treatment} {Mouse #}</code> as these fields are parsed into the results.</p>
             <p><b>Output:</b> <code>WGAMask_{RootDirectory}_{Timestamp}.csv</code> in the root directory, plus <code>{ImageNumber}_CALR_RBS25.png</code>, <code>_WGA_RBS25.png</code> and <code>_MERGED_RBS25.png</code> alongside each source image.</p>""";
     }
 
     @Override
     public Map<String, Object> showStartupMessage() {
+        JCheckBox totalCalrLimitBox = new JCheckBox("Limit Total CALR to threshold", true);
+        JCheckBox maskLimitBox = new JCheckBox("Limit WGA-mask CALR to threshold", true);
         JCheckBox cleanGeneratedFilesCheckBox = new JCheckBox("Delete previously generated files in this directory before running?", true);
 
         JPanel textPanel = new JPanel(new BorderLayout());
@@ -278,6 +282,11 @@ public class WGAMaskPlugin extends BasePlugin implements DescribablePlugin {
         separatorPanel.setBorder(BorderFactory.createEmptyBorder(8, 15, 8, 15));
         separatorPanel.add(new JSeparator(), BorderLayout.CENTER);
 
+        JPanel limitPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 15, 0));
+        limitPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 15));
+        limitPanel.add(totalCalrLimitBox);
+        limitPanel.add(maskLimitBox);
+
         JPanel inputPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 15, 0));
         inputPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 15, 15));
         inputPanel.add(cleanGeneratedFilesCheckBox);
@@ -286,12 +295,17 @@ public class WGAMaskPlugin extends BasePlugin implements DescribablePlugin {
         bodyPanel.setLayout(new BoxLayout(bodyPanel, BoxLayout.Y_AXIS));
         bodyPanel.add(textPanel);
         bodyPanel.add(separatorPanel);
+        bodyPanel.add(limitPanel);
         bodyPanel.add(inputPanel);
 
         if (!showStartupDialog(bodyPanel, "WGA Mask")) {
             return null;
         }
-        return Map.of(INPUT_CLEAN_GENERATED_FILES, cleanGeneratedFilesCheckBox.isSelected());
+        return Map.of(
+            INPUT_CLEAN_GENERATED_FILES, cleanGeneratedFilesCheckBox.isSelected(),
+            INPUT_TOTAL_CALR_LIMIT_TO_THRESHOLD, totalCalrLimitBox.isSelected(),
+            INPUT_MASK_LIMIT_TO_THRESHOLD, maskLimitBox.isSelected()
+        );
     }
 
     @Override
