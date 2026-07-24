@@ -32,7 +32,9 @@ public record Measurement(ImageChannel imageChannel, long area, BigDecimal mean,
                 min + "," +
                 max + "," +
                 integratedDensity + "," +
-                new BigDecimal(integratedDensity).divide(new BigDecimal(area), 6, RoundingMode.HALF_UP) + "," +
+                (area == 0
+                    ? "AREA ZERO - ERROR"
+                    : new BigDecimal(integratedDensity).divide(new BigDecimal(area), 6, RoundingMode.HALF_UP)) + "," +
                 imageChannel.positiveThreshold().min() + "," +
                 imageChannel.positiveThreshold().max() + "," +
                 imageChannel.negativeMean() +

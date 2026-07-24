@@ -37,7 +37,9 @@ public record Measurement(String sex, String treatment, String mouseNumber, Stri
             min + "," +
             max + "," +
             integratedDensity + "," +
-            new BigDecimal(integratedDensity).divide(new BigDecimal(area), 6, RoundingMode.HALF_UP) +
+            (area == 0
+                ? "AREA ZERO - ERROR"
+                : new BigDecimal(integratedDensity).divide(new BigDecimal(area), 6, RoundingMode.HALF_UP)) +
             System.lineSeparator();
     }
 }
